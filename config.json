@@ -1,12 +1,12 @@
 {
- "database" : {
-  "username": "dbsvradmin",
-  "password": "AlphaNum#1",
-  "host": "127.0.0.1",
-  "port": "5432",
-  "dbName": "studentdata"
- },
- "canvas":{
-    "authToken" : "7~fLWET7VnfaU9PDX"
- }
+  "database": {
+    "username": "dbsvradmin",
+    "password": "AlphaNum#1",
+    "host": "trinityedu.ddns.net",
+    "port": "5432",
+    "dbName": "studentdata"
+  },
+  "canvas": {
+    "authToken": "7~fLWET7VnfaUrQvzMRzPUuu2X2XJEEV9EY8kexXHBunG9kQJYTkzkE7ZYEVPr9PDX"
+  }
 }

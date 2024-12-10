@@ -1,5 +1,8 @@
-const courseModel = import('./courseModel.mjs');
+import courseModel from './courseModel.mjs';
+import studentModel from './studentModel.mjs';
+import courseStudentModel from './courseStudentModel.mjs';
+import assignmentGroupModel from './assignmentGroupModel.mjs'
 
-module.exports = {
-    courseModel
-};
+export {
+    courseModel, studentModel, courseStudentModel, assignmentGroupModel
+}

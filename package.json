@@ -2,6 +2,7 @@
   "name": "testapi",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -9,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "csv-parser": "^3.0.0",
     "express": "^4.21.1",
     "json2csv": "^6.0.0-alpha.2",
     "pg": "^8.13.1",

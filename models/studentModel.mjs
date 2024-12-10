@@ -2,43 +2,30 @@ import * as fs         from 'fs';
 import * as CopyStream from 'pg-copy-streams';
 import csv from 'csv-parser';
 
-export default class courseModel{    
+export default class studentModel{    
 
     canvasid;
-    coursename;
-    coursedescription;
-    startdate;
-    enddate;
+    fullname;
+    sortablename;
 
-    constructor( canvasId, courseName, courseDescription, startDate, endDate ){
+
+    constructor( canvasId, fullName, sortableName ){
         this.canvasid          = canvasId;
-        this.coursename        = courseName;
-        this.coursedescription = courseDescription;
-        this.startdate         = startDate;
-        this.enddate           = endDate;
+        this.fullname          = fullName;
+        this.sortablename      = sortableName;
     }
   
     toObj(){
         return retObj = {
             'canvasid'          : this.canvasid,
-            'coursename'        : this.coursename,
-            'coursedescription' : this.coursedescription,
-            'startdate'         : this.startdate,
-            'enddate'           : this.enddate
+            'fullname'          : this.fullname,
+            'sortablename'      : this.sortablename
         };
     }
     
     stringify(){
-        let orderedKeys = [ 'canvasid', 'coursename', 'coursedescription', 'startdate', 'enddate' ];
-
-        return JSON.stringify({
-            'canvasid'          : this.canvasid,
-            'coursename'        : this.coursename,
-            'coursedescription' : this.coursedescription,
-            'startdate'         : this.startdate,
-            'enddate'           : this.enddate
-        }, orderedKeys );
-
+        let orderedKeys = [ 'canvasid', 'fullname', 'sortablename' ];
+        return JSON.stringify(this.toObj(), orderedKeys );
     }
 
     static convertJSONtoArray(jsonObj) {
@@ -46,7 +33,7 @@ export default class courseModel{
 
         if( Array.isArray( jsonObj ) ) {
             jsonObj.forEach( element => {
-                parsedDataArray.push( new courseModel(
+                parsedDataArray.push( new studentModel(
                     element[ "id" ],
                     element[ "name" ],
                     element[ "course_code" ],
@@ -56,7 +43,7 @@ export default class courseModel{
             });		
         }
         else{
-          parsedDataArray.push( new courseModel(
+          parsedDataArray.push( new studentModel(
             jsonObj[ "id" ],
             jsonObj[ "name" ],
             jsonObj[ "course_code" ],
@@ -82,26 +69,24 @@ export default class courseModel{
           try {
             // Process rows in batches to prevent exceeding query length limits
             for (const row of csvData) {
-              const { canvasid, coursename, coursedescription, startdate, enddate } = row;
+              const { canvasid,fullname, sortablename } = row;
               
               const query = `
-                INSERT INTO course (canvasid, coursename, coursedescription, startdate, enddate)
-                VALUES ($1, $2, $3, $4, $5)
+                INSERT INTO student (canvasid, fullname, sortablename)
+                VALUES ($1, $2, $3)
                 ON CONFLICT (canvasid)
                 DO UPDATE SET 
-                  coursename = EXCLUDED.coursename, 
-                  coursedescription = EXCLUDED.coursedescription,
-                  startdate = EXCLUDED.startdate,
-                  enddate = EXCLUDED.enddate
+                  fullname = EXCLUDED.fullname,
+                  sortablename = EXCLUDED.sortablename
                   ;
               `;
     
-              const values = [canvasid, coursename, coursedescription, startdate, enddate];
+              const values = [canvasid, fullname, sortablename];
               
               // Run the upsert query for each row
               await client.query(query, values);
             }    
-            console.log('Course CSV data upserted successfully!');
+            console.log('CSV data upserted successfully!');
           } catch (err) {
             console.error('Error during upsert:', err);
           } finally {
@@ -109,14 +94,5 @@ export default class courseModel{
             await client.release();
           }
         });
-    }
-
-    static async getAll(pgPool){
-      const client = await pgPool.connect();
-      const result = await client.query({
-        rowMode: 'array',
-        text: 'select * from course;'
-      });
-      return result;
     }
 }
