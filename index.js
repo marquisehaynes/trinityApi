@@ -19,10 +19,6 @@ const pgPool = new pg.Pool({
 	connectionTimeoutMillis : 20000,
 });
 
-
-
-
-
 function writeFilePromise(fileName, data, encodingType) {
 	return new Promise((resolve, reject) => {
 		fs.writeFile(file, data, encodingType, (err) => {
@@ -52,7 +48,7 @@ function makeHttpsRequest(requestDefinition) {
 }
 
 
-function makeHttpsRequest( requestDefinition, callback ) {
+/* function makeHttpsRequest( requestDefinition, callback ) {
 	https.get( requestDefinition, ( response ) => {
 		
 	  let data = '';
@@ -72,6 +68,7 @@ function makeHttpsRequest( requestDefinition, callback ) {
 	});
 
 }
+*/
 
 async function handleCourses( ) {
 	let canvasConfig		 = JSON.parse(fs.readFileSync('config.json','utf8')).canvas;
