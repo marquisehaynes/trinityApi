@@ -1,0 +1,10 @@
+1. Handle courses *
+	-Sets array of courses for multi use
+2. Handle students *
+	-Returns array of students and array of courseStudents
+3. Handle Assignment Groups *
+	-returns map containing array of Assignment Groups, array of students, array of courseStudents
+4. Handle Assignments *
+	-returns map containing Map of Assignment Groups to Assignments, array of students, array of courseStudents
+5.Handle submissions *
+	-returns completion status
