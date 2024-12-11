@@ -1,4 +1,4 @@
-import * as models from './models/index.js';
+import * as models from './models/index.js';    
 import https	     from 'https';
 import express	   from 'express';
 import fs		   		 from 'fs';
@@ -24,6 +24,6 @@ app.listen( 3000, () => {
    });
 
 app.get( '/syncall', ( req, res ) => {
-    
+    models.courseModel.getAllCoursesFromCanvas(pgPool);
 });
 

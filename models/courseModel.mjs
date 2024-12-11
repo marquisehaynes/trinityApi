@@ -1,6 +1,9 @@
 import * as fs         from 'fs';
 import * as CopyStream from 'pg-copy-streams';
 import csv from 'csv-parser';
+import Parser	   	 from 'json2csv';
+import  * as util from '../util/index.js';
+import { writeFile } from 'fs/promises';
 
 export default class courseModel{    
 
@@ -72,7 +75,7 @@ export default class courseModel{
       const client = await pgPool.connect();
       // Start reading the CSV file
       const csvData = [];
-    
+      console.log('Attempting to read from '+ csvFilePath);
       fs.createReadStream(csvFilePath)
         .pipe(csv())
         .on('data', (row) => {
@@ -111,12 +114,23 @@ export default class courseModel{
         });
     }
 
-    static async getAll(pgPool){
-      const client = await pgPool.connect();
-      const result = await client.query({
-        rowMode: 'array',
-        text: 'select * from course;'
-      });
-      return result;
+    static async getAllCoursesFromCanvas(pgPool) {
+      const requestDef = util.getCanvasRequestDefinition('courses', null);
+      let parsedDataArray;
+      let parsedDataCSV;
+      const fileName = './extracts/courses/courseData_' + new Date().toISOString().replace(/[: ]/g, '_') + '.csv';
+      util.makeHttpsRequest(requestDef)
+        .then((data) => {
+          const parsedData = JSON.parse( data );
+          parsedDataArray = this.convertJSONtoArray( parsedData );
+          console.log('Retrieved Course Data, attempting to parse and save as csv');
+          parsedDataCSV = Parser.parse( parsedDataArray );        
+          fs.writeFileSync( fileName, parsedDataCSV);
+          courseModel.upsertCsvData( fileName, pgPool );  
+        })
+        .then(() => {
+          
+        })
     }
-}
+  
+  }

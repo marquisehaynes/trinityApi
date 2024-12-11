@@ -1,14 +1,26 @@
 import fs from 'fs';
+import https	     from 'https';
+
 export function getCanvasRequestDefinition(targetObj,params){
     const canvasToken= JSON.parse(fs.readFileSync('config.json','utf8')).canvas.authToken;
-    const objPathMap = new Map([
-        ["students", "/api/v1/courses/" + params.get('courseId') + "/enrollments?per_page=1000"],
-        ["courses", '/api/v1/courses?per_page=1000'],
-        ["assignmentgroups", '/api/v1/courses/' + params.get('courseId') + '/assignment_groups?per_page=1000'],
-        ['assignments',''],
-        ['submissions','']
-    ]);
-    return canvasRequestDef = {
+    let objPathMap;
+    if(params){
+        objPathMap = new Map([
+            ["students", "/api/v1/courses/" + params != null ? params.get('courseId') : "" + "/enrollments?per_page=1000"],
+            ["courses", '/api/v1/courses?per_page=1000'],
+            ["assignmentgroups", '/api/v1/courses/' + params != null ? params.get('courseId') : "" + '/assignment_groups?per_page=1000'],
+            ['assignments',''],
+            ['submissions','']
+        ]);
+    }
+    else{
+        objPathMap = new Map([
+            ["courses", '/api/v1/courses?per_page=1000'],
+            ['assignments',''],
+            ['submissions','']
+        ]);
+    }
+    return {
         protocol: 'https:',
         hostname: 'canvas.instructure.com',
         port: 443,
@@ -27,7 +39,7 @@ export function writeFilePromise(fileName, data, encodingType) {
 			if (err) {
 				reject(err);
 			} else {
-				resolve();
+				resolve(fileName);
 			}
 		});
 	});
@@ -54,7 +66,6 @@ export function getAllFromTable(tableName) {
         try {
             const client = await pgPool.connect();
             const result = await client.query(`SELECT * FROM ${tableName}`);
-
             client.release();
             resolve(result);
         } catch (error) {
