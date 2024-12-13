@@ -1,6 +1,8 @@
 import * as fs         from 'fs';
 import * as CopyStream from 'pg-copy-streams';
 import csv from 'csv-parser';
+import * as models from './index.js'; 
+import  * as util from '../util/index.js';  
 
 export default class studentModel{    
 
@@ -96,6 +98,34 @@ export default class studentModel{
         });
     }
 
+    static processStudents(parsedData){
+      const studentArr = [];
+      const courseStudentArray = [];
+      console.log(parsedData);
+      if (parsedData.length > 0) {
+        for (let j = 0; j < parsedData.length; j++) {
+            const std = parsedData[j];
+            const courseId = std['course_id'];
+            if (std['role'] == 'StudentEnrollment' && std['user']['name'] != 'Test Student') {
+                const student = new studentModel(
+                    parseInt(std['user']['id']),
+                    std['user']['name'],
+                    std['user']['sortable_name']
+                );
+                studentArr.push(student);
+                courseStudentArray.push(new models.courseStudentModel( parseInt(courseId), std['user']['id'] ));
+            }
+        }        
+      }
+
+      return {
+        'studentArr' : studentArr,
+        'studentArrCount' :  studentArr.length,
+        'courseStudentArray' : courseStudentArray,
+        'courseStudentArrayCount' :  courseStudentArray.length,
+      }
+    }
+
     static async getStudentsFromCanvas(courseArray, pgPool) {
       
       let parsedDataArray;
@@ -103,34 +133,21 @@ export default class studentModel{
       const fileName = './extracts/students/studentData_' + new Date().toISOString().replace(/[: ]/g, '_') + '.csv';
       
       try {
-        // Perform the HTTP request to get the data
-        const studentMap = new Map();
-        const courseStudentArray = [];
-        const studentPromises = courseArray.map((element) => {
-          const courseId = element['canvasid'];   
-          const canvasRequestDef = util.getCanvasRequestDefinition('students', new Map([ ['courseId', courseId] ]));
-
+        // Perform the HTTP request to get the data        
+        return courseArray.map((element) => {
           return new Promise(async (resolve, reject) => {
-            const data = await util.makeHttpsRequest(requestDef); 
-            const parsedCourseStudents = JSON.parse(data);
-            if (parsedCourseStudents.length > 0) {
-                for (let j = 0; j < parsedCourseStudents.length; j++) {
-                    const std = parsedCourseStudents[j];
-                    if (std['role'] == 'StudentEnrollment' && std['user']['name'] != 'Test Student') {
-                        const student = new studentModel(
-                            parseInt(std['user']['id']),
-                            std['user']['name'],
-                            std['user']['sortable_name']
-                        );
-                        studentMap.set(std['user']['id'], student);
-                        courseStudentArray.push(new models.courseStudentModel( parseInt(courseId), std['user']['id'] ));
-                    }
-                }
-            }
-            resolve();
+            try {
+              const courseId = element['canvasid'];
+              const requestDef = await util.getCanvasRequestDefinition('students', new Map([ ['courseId', courseId] ]));
+              const data = await util.makeHttpsRequest(requestDef); 
+              const parsedCourseStudents = JSON.parse(data);
+              //processStudents(parsedCourseStudents);
+              resolve(parsedCourseStudents);
+            } catch (error) {
+              resolve(error);
+            }           
           });
         });
-
       } catch (error) {
         console.error('Error during student data processing:', error);
       }

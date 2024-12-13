@@ -26,8 +26,22 @@ app.listen( 3000, () => {
 app.get( '/syncall', async ( req, res ) => {
     const courseArray = await models.courseModel.getAllCoursesFromCanvas(pgPool);
 	console.log('Course data processed and upserted successfully!');
-	console.log('Resulting Course Data: ');
-	console.log(courseArray);
-	res.send('Course data processed and upserted successfully!');	
+	const studentPromises = await models.studentModel.getStudentsFromCanvas(courseArray)
+	Promise.allSettled(studentPromises)
+	.then( results => {
+		const resArray = [];
+		for(const res of results){
+			for(const resInstance of res['value'] ){
+				resArray.push(resInstance);
+			}			
+		}
+		return models.studentModel.processStudents(resArray);
+	})
+	.then(processedRes =>{
+		console.log(processedRes);
+		res.send(processedRes);	
+	});
+	
+	
 });
 
