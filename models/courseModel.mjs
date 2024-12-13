@@ -104,7 +104,6 @@ export default class courseModel{
               // Run the upsert query for each row
               await client.query(query, values);
             }    
-            console.log('Course CSV data upserted successfully!');
           } catch (err) {
             console.error('Error during upsert:', err);
           } finally {
@@ -119,18 +118,21 @@ export default class courseModel{
       let parsedDataArray;
       let parsedDataCSV;
       const fileName = './extracts/courses/courseData_' + new Date().toISOString().replace(/[: ]/g, '_') + '.csv';
-      util.makeHttpsRequest(requestDef)
-        .then((data) => {
-          const parsedData = JSON.parse( data );
-          parsedDataArray = this.convertJSONtoArray( parsedData );
-          console.log('Retrieved Course Data, attempting to parse and save as csv');
-          parsedDataCSV = Parser.parse( parsedDataArray );        
-          fs.writeFileSync( fileName, parsedDataCSV);
-          courseModel.upsertCsvData( fileName, pgPool );  
-        })
-        .then(() => {
-          
-        })
+      
+      try {
+        // Perform the HTTP request to get the data
+        const data = await util.makeHttpsRequest(requestDef); 
+        const parsedData = JSON.parse(data);
+        parsedDataArray = this.convertJSONtoArray(parsedData);
+        console.log('Retrieved Course Data, attempting to parse and save as csv');
+        parsedDataCSV = Parser.parse(parsedDataArray); 
+        fs.writeFileSync(fileName, parsedDataCSV);
+        
+        await this.upsertCsvData(fileName, pgPool);
+        console.log('Course data upsert completed!');
+        return parsedDataArray;
+      } catch (error) {
+        console.error('Error during course data processing:', error);
+      }
     }
-  
   }

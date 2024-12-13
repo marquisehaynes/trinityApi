@@ -23,7 +23,11 @@ app.listen( 3000, () => {
     console.log( "Server running on port 3000" );
    });
 
-app.get( '/syncall', ( req, res ) => {
-    models.courseModel.getAllCoursesFromCanvas(pgPool);
+app.get( '/syncall', async ( req, res ) => {
+    const courseArray = await models.courseModel.getAllCoursesFromCanvas(pgPool);
+	console.log('Course data processed and upserted successfully!');
+	console.log('Resulting Course Data: ');
+	console.log(courseArray);
+	res.send('Course data processed and upserted successfully!');	
 });
 

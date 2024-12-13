@@ -95,4 +95,44 @@ export default class studentModel{
           }
         });
     }
+
+    static async getStudentsFromCanvas(courseArray, pgPool) {
+      
+      let parsedDataArray;
+      let parsedDataCSV;
+      const fileName = './extracts/students/studentData_' + new Date().toISOString().replace(/[: ]/g, '_') + '.csv';
+      
+      try {
+        // Perform the HTTP request to get the data
+        const studentMap = new Map();
+        const courseStudentArray = [];
+        const studentPromises = courseArray.map((element) => {
+          const courseId = element['canvasid'];   
+          const canvasRequestDef = util.getCanvasRequestDefinition('students', new Map([ ['courseId', courseId] ]));
+
+          return new Promise(async (resolve, reject) => {
+            const data = await util.makeHttpsRequest(requestDef); 
+            const parsedCourseStudents = JSON.parse(data);
+            if (parsedCourseStudents.length > 0) {
+                for (let j = 0; j < parsedCourseStudents.length; j++) {
+                    const std = parsedCourseStudents[j];
+                    if (std['role'] == 'StudentEnrollment' && std['user']['name'] != 'Test Student') {
+                        const student = new studentModel(
+                            parseInt(std['user']['id']),
+                            std['user']['name'],
+                            std['user']['sortable_name']
+                        );
+                        studentMap.set(std['user']['id'], student);
+                        courseStudentArray.push(new models.courseStudentModel( parseInt(courseId), std['user']['id'] ));
+                    }
+                }
+            }
+            resolve();
+          });
+        });
+
+      } catch (error) {
+        console.error('Error during student data processing:', error);
+      }
+    }
 }
