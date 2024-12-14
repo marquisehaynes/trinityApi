@@ -39,7 +39,7 @@ app.get( '/syncall', async ( req, res ) => {
 			}					
 		}
 		const assGrpArray = await models.assignmentGroupModel.convertJSONtoArray(resArray);
-		return assGrpArray;
+		return await models.assignmentGroupModel.processAssignmentGroups(assGrpArray, pgPool);
  	})
 	.then( results => {
 		res.send(results);

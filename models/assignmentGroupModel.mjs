@@ -2,6 +2,7 @@ import * as fs         from 'fs';
 import * as CopyStream from 'pg-copy-streams';
 import csv from 'csv-parser';
 import  * as util from '../util/index.js';  
+import Parser from 'json2csv';
 
 export default class assignmentGroupModel{    
 
@@ -117,6 +118,14 @@ export default class assignmentGroupModel{
       } catch (error) {
         console.error('Error during assignment group processing:', error);
       }
+    }
+
+    static async processAssignmentGroups(parsedData,pgPool){
+      const assGrpCSV = Parser.parse(parsedData);
+      const assGrpFileName = './extracts/assignmentgroups/assignmentGroupData_' + new Date().toISOString().replace(/[: ]/g, '_') + '.csv';
+      fs.writeFileSync(assGrpFileName, assGrpCSV);          
+      await this.upsertCsvData(assGrpFileName, pgPool);
+      return parsedData;
     }
    
 }
