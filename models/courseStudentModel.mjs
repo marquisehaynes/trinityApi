@@ -37,8 +37,8 @@ export default class courseStudentModel{
       const client = await pgPool.connect();
       // Start reading the CSV file
       const csvData = [];
-    
-      fs.createReadStream(csvFilePath)
+      console.log('Attempting to read from '+ csvFilePath);
+      await fs.createReadStream(csvFilePath)
         .pipe(csv())
         .on('data', (row) => {
           csvData.push(row);
@@ -61,12 +61,13 @@ export default class courseStudentModel{
               // Run the upsert query for each row
               await client.query(query, values);
             }    
-            console.log('CSV data upserted successfully!');
+            console.log('CourseStudent CSV data upserted successfully!');
           } catch (err) {
             console.error('Error during upsert:', err);
           } finally {
             // Close the pool connection when done
             await client.release();
+            return;
           }
         });
     }

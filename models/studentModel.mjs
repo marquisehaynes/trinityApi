@@ -3,6 +3,7 @@ import * as CopyStream from 'pg-copy-streams';
 import csv from 'csv-parser';
 import * as models from './index.js'; 
 import  * as util from '../util/index.js';  
+import Parser from 'json2csv';
 
 export default class studentModel{    
 
@@ -61,8 +62,8 @@ export default class studentModel{
       const client = await pgPool.connect();
       // Start reading the CSV file
       const csvData = [];
-    
-      fs.createReadStream(csvFilePath)
+      console.log('Attempting to read from '+ csvFilePath);
+      await fs.createReadStream(csvFilePath)
         .pipe(csv())
         .on('data', (row) => {
           csvData.push(row);
@@ -88,20 +89,20 @@ export default class studentModel{
               // Run the upsert query for each row
               await client.query(query, values);
             }    
-            console.log('CSV data upserted successfully!');
+            console.log('Student CSV data upserted successfully!');
           } catch (err) {
             console.error('Error during upsert:', err);
           } finally {
             // Close the pool connection when done
             await client.release();
+            return;
           }
         });
     }
 
-    static processStudents(parsedData){
-      const studentArr = [];
+    static async processStudents(parsedData,pgPool){
+      let studentArr = [];
       const courseStudentArray = [];
-      console.log(parsedData);
       if (parsedData.length > 0) {
         for (let j = 0; j < parsedData.length; j++) {
             const std = parsedData[j];
@@ -117,21 +118,22 @@ export default class studentModel{
             }
         }        
       }
-
+      studentArr = Array.from(new Set(studentArr.map(o => JSON.stringify(o)))).map(str => JSON.parse(str));
+      const studentCSV = Parser.parse(studentArr); 
+      const studentFileName = './extracts/students/studentData_' + new Date().toISOString().replace(/[: ]/g, '_') + '.csv';
+      const courseStudentCSV = Parser.parse(courseStudentArray);
+      const courseStudentFileName = './extracts/coursestudents/courseStudentData_' + new Date().toISOString().replace(/[: ]/g, '_') + '.csv';
+      fs.writeFileSync(studentFileName, studentCSV);        
+      fs.writeFileSync(courseStudentFileName, courseStudentCSV);  
+      await this.upsertCsvData(studentFileName, pgPool);
+      await models.courseStudentModel.upsertCsvData(courseStudentFileName, pgPool);
       return {
         'studentArr' : studentArr,
-        'studentArrCount' :  studentArr.length,
         'courseStudentArray' : courseStudentArray,
-        'courseStudentArrayCount' :  courseStudentArray.length,
       }
     }
 
     static async getStudentsFromCanvas(courseArray, pgPool) {
-      
-      let parsedDataArray;
-      let parsedDataCSV;
-      const fileName = './extracts/students/studentData_' + new Date().toISOString().replace(/[: ]/g, '_') + '.csv';
-      
       try {
         // Perform the HTTP request to get the data        
         return courseArray.map((element) => {
@@ -152,4 +154,5 @@ export default class studentModel{
         console.error('Error during student data processing:', error);
       }
     }
+   
 }

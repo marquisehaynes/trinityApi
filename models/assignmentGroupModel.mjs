@@ -1,6 +1,7 @@
 import * as fs         from 'fs';
 import * as CopyStream from 'pg-copy-streams';
 import csv from 'csv-parser';
+import  * as util from '../util/index.js';  
 
 export default class assignmentGroupModel{    
 
@@ -18,14 +19,14 @@ export default class assignmentGroupModel{
     }
   
 
-    static convertJSONtoArray(jsonObj, course) {
+    static convertJSONtoArray(jsonObj) {
         let parsedDataArray = [];
 
         if( Array.isArray( jsonObj ) ) {
             jsonObj.forEach( element => {
                 parsedDataArray.push( new assignmentGroupModel(
                     element[ "id" ].toString(),
-                    course.toString(),
+                    element[ "courseId" ],
                     element[ "name" ],
                     element[ "group_weight" ]
                 ));
@@ -34,7 +35,7 @@ export default class assignmentGroupModel{
         else{
             parsedDataArray.push( new assignmentGroupModel(
                 element[ "id" ].toString(),
-                course.toString(),
+                element[ "courseId" ],
                 element[ "name" ],
                 element[ "group_weight" ]
             ));		
@@ -93,4 +94,29 @@ export default class assignmentGroupModel{
       });
       return result;
     }
+
+    static async getAssignmentGroupsFromCanvas(courseArray, pgPool) {
+      try {
+        // Perform the HTTP request to get the data        
+        return courseArray.map((element) => {
+          return new Promise(async (resolve, reject) => {
+            try {
+              const courseId = element['canvasid'];
+              const requestDef = await util.getCanvasRequestDefinition('assignmentgroups', new Map([ ['courseId', courseId] ]));
+              const data = await util.makeHttpsRequest(requestDef); 
+              const parsedAssignmentGroups = JSON.parse(data);
+              for(const ag of parsedAssignmentGroups){
+                ag.courseId = courseId;
+              }
+              resolve(parsedAssignmentGroups);
+            } catch (error) {
+              resolve(error);
+            }           
+          });
+        });
+      } catch (error) {
+        console.error('Error during assignment group processing:', error);
+      }
+    }
+   
 }
