@@ -28,7 +28,7 @@ app.get( '/syncall', async ( req, res ) => {
 	console.log('Course data processed and upserted successfully!');
 	const studentPromises = await models.studentModel.getStudentsFromCanvas(courseArray);
 	const assGroupPromises = await models.assignmentGroupModel.getAssignmentGroupsFromCanvas(courseArray);
-	Promise.allSettled(assGroupPromises)
+	await Promise.allSettled(assGroupPromises)
 	.then( async function(results) {
 		const resArray = [];
 		for(const res of results){
@@ -42,6 +42,7 @@ app.get( '/syncall', async ( req, res ) => {
 		return await models.assignmentGroupModel.processAssignmentGroups(assGrpArray, pgPool);
  	})
 	.then( results => {
+		console.log('Finished!');
 		res.send(results);
 	})
 	/*
