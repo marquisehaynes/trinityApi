@@ -49,7 +49,7 @@ export default class assignmentGroupModel{
       const client = await pgPool.connect();
       // Start reading the CSV file
       const csvData = [];
-    
+      console.log('Attempting to read from '+ csvFilePath);
       fs.createReadStream(csvFilePath)
         .pipe(csv())
         .on('data', (row) => {

@@ -24,31 +24,20 @@ app.get( '/syncall', async ( req, res ) => {
     try {
         const courseArray = await models.courseModel.getAllCoursesFromCanvas(pgPool);
         console.log('Course data processed and upserted successfully!');
-        
-        const studentPromises = await models.studentModel.getStudentsFromCanvas(courseArray);
+               
         const assGroupPromises = await models.assignmentGroupModel.getAssignmentGroupsFromCanvas(courseArray);
-
-        // Wait for all assignment group promises to settle
-        const assGrpResults = await Promise.allSettled(assGroupPromises);
-
-        const resArray = [];
-        for (const res of assGrpResults) {
-            if (Array.isArray(res['value'])) {
-                for (const resInstance of res['value']) {
-                    resArray.push(resInstance);
-                }
-            }
-        }
-
-        // Convert JSON to array
-        const assGrpArray = await models.assignmentGroupModel.convertJSONtoArray(resArray);
-
-        // Wait for the assignment groups to be processed
-        await models.assignmentGroupModel.processAssignmentGroups(assGrpArray, pgPool);
-        
+		const assGrpResults = await Promise.allSettled(assGroupPromises);
+		const assGrpResArray = assGrpResults.flatMap(res => Array.isArray(res['value']) ? res['value'] : []);
+		const assGrpArray = await models.assignmentGroupModel.convertJSONtoArray(assGrpResArray);
+		await models.assignmentGroupModel.processAssignmentGroups(assGrpArray, pgPool);        
         console.log('Assignment groups processed successfully!');
 		
-
+		const studentPromises = await models.studentModel.getStudentsFromCanvas(courseArray);
+		const studentResults = await Promise.allSettled(studentPromises);
+		const studentResArray = studentResults.flatMap(res => Array.isArray(res['value']) ? res['value'] : []);
+		const studentData = await models.studentModel.processStudents(studentResArray, pgPool);
+		console.log('Students and CourseStudents processed successfully!');
+		
         // Send the response
         res.send(assGrpArray);
 
