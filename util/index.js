@@ -9,14 +9,13 @@ export function getCanvasRequestDefinition(targetObj,params){
             ["students", "/api/v1/courses/" + params.get('courseId') + "/enrollments?per_page=1000"],
             ["courses", '/api/v1/courses?per_page=1000'],
             ["assignmentgroups", '/api/v1/courses/' + params.get('courseId') + '/assignment_groups?per_page=1000'],
-            ['assignments',''],
+            ['assignments','/api/v1/courses/' + params.get('courseId') + '/assignments?per_page=1000'],
             ['submissions','']
         ]);
     }
     else{
         objPathMap = new Map([
-            ["courses", '/api/v1/courses?per_page=1000'],
-            ['assignments',''],
+            ["courses", '/api/v1/courses?per_page=1000']
             ['submissions','']
         ]);
     }

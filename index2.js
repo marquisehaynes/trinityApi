@@ -31,38 +31,21 @@ app.get( '/syncall', async ( req, res ) => {
 		const assGrpArray = await models.assignmentGroupModel.convertJSONtoArray(assGrpResArray);
 		await models.assignmentGroupModel.processAssignmentGroups(assGrpArray, pgPool);        
         console.log('Assignment groups processed successfully!');
+
+		const assPromises = await models.assignmentModel.getStudentsFromCanvas(courseArray);
 		
 		const studentPromises = await models.studentModel.getStudentsFromCanvas(courseArray);
 		const studentResults = await Promise.allSettled(studentPromises);
 		const studentResArray = studentResults.flatMap(res => Array.isArray(res['value']) ? res['value'] : []);
 		const studentData = await models.studentModel.processStudents(studentResArray, pgPool);
 		console.log('Students and CourseStudents processed successfully!');
-		
+
         // Send the response
-        res.send(assGrpArray);
+        res.send(studentData);
 
     } catch (error) {
         console.error('Error during the sync operation:', error);
         res.status(500).send('Internal Server Error');
-    }
-	/*
-	Promise.allSettled(studentPromises)
-	.then( async function(results) {
-		const resArray = [];
-		for(const res of results){
-			for(const resInstance of res['value'] ){
-				resArray.push(resInstance);
-			}			
-		}
-		const studentData = await models.studentModel.processStudents(resArray, pgPool);
-		console.log('done processing students');
-		return studentData;
-	})
-	.then(processedRes =>{	
-		res.send(processedRes);	
-	});
-	*/
-	
-	
+    }	
 });
 
