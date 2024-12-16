@@ -29,10 +29,15 @@ app.get( '/syncall', async ( req, res ) => {
 		const assGrpResults = await Promise.allSettled(assGroupPromises);
 		const assGrpResArray = assGrpResults.flatMap(res => Array.isArray(res['value']) ? res['value'] : []);
 		const assGrpArray = await models.assignmentGroupModel.convertJSONtoArray(assGrpResArray);
-		await models.assignmentGroupModel.processAssignmentGroups(assGrpArray, pgPool);        
+		const assGrpData =  await models.assignmentGroupModel.processAssignmentGroups(assGrpArray, pgPool);        
         console.log('Assignment groups processed successfully!');
 
-		const assPromises = await models.assignmentModel.getStudentsFromCanvas(courseArray);
+		const assPromises = await models.assignmentModel.getAssignmentFromCanvas(courseArray);
+		const assResults = await Promise.allSettled(assPromises);
+		const assResArray = assResults.flatMap(res => Array.isArray(res['value']) ? res['value'] : []);
+		const assArray = await models.assignmentModel.convertJSONtoArray(assResArray);
+		const assData = await models.assignmentModel.processAssignments(assArray, pgPool);
+		console.log('Assignments processed successfully!');
 		
 		const studentPromises = await models.studentModel.getStudentsFromCanvas(courseArray);
 		const studentResults = await Promise.allSettled(studentPromises);
@@ -41,7 +46,7 @@ app.get( '/syncall', async ( req, res ) => {
 		console.log('Students and CourseStudents processed successfully!');
 
         // Send the response
-        res.send(studentData);
+        res.send(assArray);
 
     } catch (error) {
         console.error('Error during the sync operation:', error);

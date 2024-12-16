@@ -15,7 +15,7 @@ export function getCanvasRequestDefinition(targetObj,params){
     }
     else{
         objPathMap = new Map([
-            ["courses", '/api/v1/courses?per_page=1000']
+            ["courses", '/api/v1/courses?per_page=1000'],
             ['submissions','']
         ]);
     }

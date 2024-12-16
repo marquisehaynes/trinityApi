@@ -96,7 +96,7 @@ export default class assignmentGroupModel{
       return result;
     }
 
-    static async getAssignmentGroupsFromCanvas(courseArray, pgPool) {
+    static async getAssignmentGroupsFromCanvas(courseArray) {
       try {
         // Perform the HTTP request to get the data        
         return courseArray.map((element) => {
@@ -120,7 +120,7 @@ export default class assignmentGroupModel{
       }
     }
 
-    static async processAssignmentGroups(parsedData,pgPool){
+    static async processAssignmentGroups(parsedData, pgPool){
       const assGrpCSV = Parser.parse(parsedData);
       const assGrpFileName = './extracts/assignmentgroups/assignmentGroupData_' + new Date().toISOString().replace(/[: ]/g, '_') + '.csv';
       fs.writeFileSync(assGrpFileName, assGrpCSV);          
