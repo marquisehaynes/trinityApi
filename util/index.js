@@ -10,13 +10,12 @@ export function getCanvasRequestDefinition(targetObj,params){
             ["courses", '/api/v1/courses?per_page=1000'],
             ["assignmentgroups", '/api/v1/courses/' + params.get('courseId') + '/assignment_groups?per_page=1000'],
             ['assignments','/api/v1/courses/' + params.get('courseId') + '/assignments?per_page=1000'],
-            ['submissions','']
+            ['submissions','api/v1/courses/' + params.get('courseId') + '/assignments/' + params.get('assignmentId') + '/submissions?per_page=35000']
         ]);
     }
     else{
         objPathMap = new Map([
-            ["courses", '/api/v1/courses?per_page=1000'],
-            ['submissions','']
+            ["courses", '/api/v1/courses?per_page=1000']
         ]);
     }
     return {

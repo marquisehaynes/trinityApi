@@ -45,8 +45,12 @@ app.get( '/syncall', async ( req, res ) => {
 		const studentData = await models.studentModel.processStudents(studentResArray, pgPool);
 		console.log('Students and CourseStudents processed successfully!');
 
+		const submissionPromises = await models.submissionModel.getSubmissionsFromCanvas(assData);
+		const submissionResults = await Promise.allSettled(submissionPromises);
+		//const submissionResArray = submissionResults.flatMap(res => Array.isArray(res['value']) ? res['value'] : []);
+
         // Send the response
-        res.send(assArray);
+        res.send(submissionResults);
 
     } catch (error) {
         console.error('Error during the sync operation:', error);
