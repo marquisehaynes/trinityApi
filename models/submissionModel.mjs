@@ -94,6 +94,8 @@ export default class submissionModel{
 
     static async getSubmissionsFromCanvas(assignmentArray) {
       try {
+
+        console.log()
         // Perform the HTTP request to get the data        
         return assignmentArray.map((element) => {
           return new Promise(async (resolve, reject) => {
@@ -103,7 +105,7 @@ export default class submissionModel{
               const requestDef = await util.getCanvasRequestDefinition('submissions', new Map([ ['courseId', courseId], ['assignmentId', assignmentId] ]));
               const data = await util.makeHttpsRequest(requestDef); 
               const parsedSubmissions = JSON.parse(data);
-              console.log(parsedData);
+              console.log(parsedSubmissions);
               for(const a of parsedSubmissions){
                 a.courseid = courseId;
               }
