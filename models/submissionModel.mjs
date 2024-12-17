@@ -103,6 +103,7 @@ export default class submissionModel{
               const requestDef = await util.getCanvasRequestDefinition('submissions', new Map([ ['courseId', courseId], ['assignmentId', assignmentId] ]));
               const data = await util.makeHttpsRequest(requestDef); 
               const parsedSubmissions = JSON.parse(data);
+              console.log(parsedData);
               for(const a of parsedSubmissions){
                 a.courseid = courseId;
               }
