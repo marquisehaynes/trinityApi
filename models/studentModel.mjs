@@ -32,30 +32,34 @@ export default class studentModel{
     }
 
     static convertJSONtoArray(jsonObj) {
-        let parsedDataArray = [];
+        const parsedDataMap = new Map();
 
         if( Array.isArray( jsonObj ) ) {
-            jsonObj.forEach( element => {
-                parsedDataArray.push( new studentModel(
-                    element[ "id" ],
-                    element[ "name" ],
-                    element[ "course_code" ],
-                    element[ "start_at" ],
-                    element[ "end_at" ]
-                ));
-            });		
+          for(const element of jsonObj){
+            if(!parsedDataMap.has(element[ "id" ])){
+              parsedDataMap.set(element[ "id" ], new studentModel(
+                element[ "id" ],
+                element[ "name" ],
+                element[ "course_code" ],
+                element[ "start_at" ],
+                element[ "end_at" ]
+              ));
+            }
+          }	
         }
         else{
-          parsedDataArray.push( new studentModel(
-            jsonObj[ "id" ],
-            jsonObj[ "name" ],
-            jsonObj[ "course_code" ],
-            jsonObj[ "start_at" ],
-            jsonObj[ "end_at" ]
-          ));		
+          if(!parsedDataMap.has(jsonObj[ "id" ])){
+            parsedDataMap.set(jsonObj[ "id" ], new studentModel(
+              jsonObj[ "id" ],
+              jsonObj[ "name" ],
+              jsonObj[ "course_code" ],
+              jsonObj[ "start_at" ],
+              jsonObj[ "end_at" ]
+            ));
+          }	
         }
 
-        return parsedDataArray;     
+        return parsedDataMap.values();     
     }
 
     static async upsertCsvData( csvFilePath, pgPool ) {
@@ -100,7 +104,7 @@ export default class studentModel{
         });
     }
 
-    static async processStudents(parsedData,pgPool){
+    static async processStudents(parsedData, pgPool){
       let studentArr = [];
       const courseStudentArray = [];
       if (parsedData.length > 0) {
@@ -133,7 +137,7 @@ export default class studentModel{
       }
     }
 
-    static async getStudentsFromCanvas(courseArray, pgPool) {
+    static async getStudentsFromCanvas(courseArray) {
       try {
         // Perform the HTTP request to get the data        
         return courseArray.map((element) => {
