@@ -36,7 +36,6 @@ export function getCanvasRequestDefinition(targetObj,params){
     };
 }
 
-
 export function writeFilePromise(fileName, data, encodingType) {
 	return new Promise((resolve, reject) => {
 		fs.writeFile(file, data, encodingType, (err) => {
@@ -77,4 +76,55 @@ export function getAllFromTable(tableName) {
             reject(error);
         }
     });
+}
+
+export async function upsertJsonToDb(jsonContent, tableName, tableColumns) {
+    try {
+        // Read the CSV file synchronously
+        const fileContent = fs.readFileSync('path/to/your.csv', 'utf-8');
+    
+        // Parse the CSV data
+        const records = parse(fileContent, {
+        columns: true, // Use the first row as column headers
+        skip_empty_lines: true,
+        });
+    
+        // Store results
+        const results = [];
+    
+        // Start a transaction
+        const client = await pool.connect();
+        try {
+        await client.query('BEGIN');
+    
+        // Iterate through records and insert them into the PostgreSQL table
+        for (const record of records) {
+            try {
+            await client.query(
+                'INSERT INTO your_table (column1, column2, column3) VALUES ($1, $2, $3)',
+                [record.column1, record.column2, record.column3]
+            );
+            results.push({ record, success: true, error: null });
+            } catch (insertError) {
+            console.error('Insert error for record:', record, insertError.message);
+            results.push({ record, success: false, error: insertError.message });
+            }
+        }
+    
+        await client.query('COMMIT');
+        console.log('All records processed.');
+        } catch (transactionError) {
+        await client.query('ROLLBACK');
+        console.error('Transaction error:', transactionError.message);
+        } finally {
+        client.release();
+        }
+    
+        // Log results
+        console.log('Results:', results);
+    } catch (err) {
+        console.error('Error reading or processing the CSV file:', err.message);
+    } finally {
+        await pool.end();
+    }
 }
