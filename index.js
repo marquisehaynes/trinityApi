@@ -24,7 +24,6 @@ app.listen( 3000, () => {
 app.get( '/syncall', async ( req, res ) => {
     try {
         const courseArray = await models.courseModel.getAllCoursesFromCanvas(pgPool);
-        console.log('Course data processed and upserted successfully!');
         const assGrpArray = [];
 		const assArray = [];
 		const courseStudentArray = [];
@@ -73,7 +72,7 @@ app.get( '/syncall', async ( req, res ) => {
 			'course' : courseArray,
 			'assignmentGroup' : finalAssGrpArray,
 			'assignment' : finalAssArray,
-			'student' : finalStudentArray,
+			'student' : await models.studentModel.processStudents(finalStudentArray, pgPool),
 			'courseStudent' : finalCourseStudentArray,
 			'submission' : finalSubmissionsArray
 		};
