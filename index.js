@@ -1,4 +1,5 @@
 import * as models from './models/index.js';
+import  * as util from './util/index.js'; 
 import express	   from 'express';
 import fs		   		 from 'fs';
 import pg		   		 from 'pg';
@@ -24,33 +25,61 @@ app.get( '/syncall', async ( req, res ) => {
     try {
         const courseArray = await models.courseModel.getAllCoursesFromCanvas(pgPool);
         console.log('Course data processed and upserted successfully!');
-               
-        const assGroupPromises = await models.assignmentGroupModel.getAssignmentGroupsFromCanvas(courseArray);
-		const assGrpResults = await Promise.allSettled(assGroupPromises);
-		const assGrpResArray = assGrpResults.flatMap(res => Array.isArray(res['value']) ? res['value'] : []);
-		const assGrpArray = await models.assignmentGroupModel.convertJSONtoArray(assGrpResArray);
-		const assGrpData =  await models.assignmentGroupModel.processAssignmentGroups(assGrpArray, pgPool);        
-        console.log('Assignment groups processed successfully!');
-
-		const assPromises = await models.assignmentModel.getAssignmentFromCanvas(courseArray);
-		const assResults = await Promise.allSettled(assPromises);
-		const assResArray = assResults.flatMap(res => Array.isArray(res['value']) ? res['value'] : []);
-		const assArray = await models.assignmentModel.convertJSONtoArray(assResArray);
-		const assData = await models.assignmentModel.processAssignments(assArray, pgPool);
-		console.log('Assignments processed successfully!');
-		
-		const studentPromises = await models.studentModel.getStudentsFromCanvas(courseArray);
-		const studentResults = await Promise.allSettled(studentPromises);
-		const studentResArray = studentResults.flatMap(res => Array.isArray(res['value']) ? res['value'] : []);
-		const studentData = await models.studentModel.processStudents(studentResArray, pgPool);
-		console.log('Students and CourseStudents processed successfully!');
-
-		const submissionPromises = await models.submissionModel.getSubmissionsFromCanvas(assData);
-		const submissionResults = await Promise.allSettled(submissionPromises);
-		//const submissionResArray = submissionResults.flatMap(res => Array.isArray(res['value']) ? res['value'] : []);
+        const assGrpArray = [];
+		const assArray = [];
+		const courseStudentArray = [];
+		const subArray = [];
+		for(const course of courseArray){
+			const courseId = course['canvasid'];
+			const assGrpRequestDef = util.getCanvasRequestDefinition('assignmentgroups', new Map([ ['courseId', courseId] ]));
+			const assRequestDef = await util.getCanvasRequestDefinition('assignments', new Map([ ['courseId', courseId] ]));
+			const studentRequestDef = await util.getCanvasRequestDefinition('students', new Map([ ['courseId', courseId] ]));
+			const submissionRequestDef = await util.getCanvasRequestDefinition('submissions', new Map([ ['courseId', courseId] ]));
+			const assGrpData = await util.makeHttpsRequest(assGrpRequestDef); 			
+			const assData = await util.makeHttpsRequest(assRequestDef); 
+			const stdData = await util.makeHttpsRequest(studentRequestDef); 
+			const submissionData = await util.makeHttpsRequest(submissionRequestDef); 
+			const parsedAssignments = JSON.parse(assData);
+			const parsedAssignmentGroups = JSON.parse(assGrpData);
+			const parsedCourseStudents = JSON.parse(stdData);
+			const parsedSubmissions = JSON.parse(submissionData);
+			
+			for(const ag of parsedAssignmentGroups){
+				ag.courseId = courseId;
+				assGrpArray.push(ag);
+			}			
+			for(const a of parsedAssignments){
+				a.courseid = courseId;
+				assArray.push(a);
+			}
+			for(const std of parsedCourseStudents){
+				if (std['role'] == 'StudentEnrollment' && std['user']['name'] != 'Test Student') {
+					courseStudentArray.push(std);
+				}
+			}
+			for(const sub of parsedSubmissions){
+				sub["courseid"] = courseId;
+				sub["coursestudentid"] = courseId + '_' + sub["user_id"];
+				subArray.push(sub);
+			}
+			
+		}
+		const finalAssGrpArray = await models.assignmentGroupModel.convertJSONtoArray(assGrpArray);
+		const finalAssArray = await models.assignmentModel.convertJSONtoArray(assArray);
+		const finalStudentArray = await models.studentModel.convertJSONtoArray(courseStudentArray);
+		const finalCourseStudentArray = await models.courseStudentModel.convertJSONtoArray(courseStudentArray);
+		const finalSubmissionsArray = await models.submissionModel.convertJSONtoArray(subArray);
+		const retMap = {
+			'course' : courseArray,
+			'assignmentGroup' : finalAssGrpArray,
+			'assignment' : finalAssArray,
+			'student' : finalStudentArray,
+			'courseStudent' : finalCourseStudentArray,
+			'submission' : finalSubmissionsArray
+		};
 
         // Send the response
-        res.send(submissionResults);
+        res.send(retMap);
 
     } catch (error) {
         console.error('Error during the sync operation:', error);

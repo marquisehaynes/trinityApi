@@ -1,6 +1,7 @@
 import * as fs         from 'fs';
 import * as CopyStream from 'pg-copy-streams';
 import csv from 'csv-parser';
+import studentModel from './studentModel.mjs';
 
 export default class courseStudentModel{    
 
@@ -12,25 +13,6 @@ export default class courseStudentModel{
         this.courseid          = courseId;
         this.studentid        = studentId;
         this.uniqueid        = courseId + '_' + studentId;
-    }
-  
-    toObj(){
-        return retObj = {
-            'courseid'          : this.courseid,
-            'studentid'        : this.studentid,
-            'uniqueid'          :this.uniqueid
-        };
-    }
-    
-    stringify(){
-        let orderedKeys = [ 'courseid', 'studentid', 'uniqueid' ];
-
-        return JSON.stringify({
-            'courseid'          : this.courseid,
-            'studentid'        : this.studentid,
-            'uniqueid'          :this.uniqueid
-        }, orderedKeys );
-
     }
 
     static async upsertCsvData( csvFilePath, pgPool ) {
@@ -72,14 +54,24 @@ export default class courseStudentModel{
         });
     }
 
-    static async getAll(pgPool){
-      const client = await pgPool.connect();
-      const result = await client.query({
-        rowMode: 'array',
-        text: 'select * from coursestudent;'
-      });
-      return result;
-    }
+    static convertJSONtoArray(jsonObj) {
+      let parsedDataArray = [];
+      if( Array.isArray( jsonObj ) ) {
+        for(const element of jsonObj){
+          parsedDataArray.push( new courseStudentModel(
+            element[ "course_id" ].toString(),
+            element['user']['id'].toString()
+          ));
+        }	
+      }
+      else{
+        parsedDataArray.push( new courseStudentModel(
+          jsonObj[ "course_id" ].toString(),
+          jsonObj['user']['id'].toString()
+        ));
+      }
+      return parsedDataArray;     
+  }
 
     
 }

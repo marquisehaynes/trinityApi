@@ -20,29 +20,6 @@ export default class courseModel{
         this.startdate         = startDate;
         this.enddate           = endDate;
     }
-  
-    toObj(){
-        return retObj = {
-            'canvasid'          : this.canvasid,
-            'coursename'        : this.coursename,
-            'coursedescription' : this.coursedescription,
-            'startdate'         : this.startdate,
-            'enddate'           : this.enddate
-        };
-    }
-    
-    stringify(){
-        let orderedKeys = [ 'canvasid', 'coursename', 'coursedescription', 'startdate', 'enddate' ];
-
-        return JSON.stringify({
-            'canvasid'          : this.canvasid,
-            'coursename'        : this.coursename,
-            'coursedescription' : this.coursedescription,
-            'startdate'         : this.startdate,
-            'enddate'           : this.enddate
-        }, orderedKeys );
-
-    }
 
     static convertJSONtoArray(jsonObj) {
         let parsedDataArray = [];

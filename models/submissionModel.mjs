@@ -18,7 +18,7 @@ export default class submissionModel{
       this.coursestudentid = courseStudentId;
       this.studentid = studentId;
       this.assignmentid = assId;
-      this.attemptnumber = attemptNumber;
+      this.attemptnumber = attemptNumber ? attemptNumber : 0;
       this.score = Score;
     }
   
@@ -29,20 +29,22 @@ export default class submissionModel{
             jsonObj.forEach( element => {
                 parsedDataArray.push( new submissionModel(
                     element[ "id" ].toString(),
-                    element[ "courseid" ].toString(),
-                    element[ "assignment_group_id" ].toString(),
-                    element[ "name" ],
-                    element[ "points_possible" ]
+                    element[ "coursestudentid" ].toString(),
+                    element[ "user_id" ].toString(),
+                    element[ "assignment_id" ],
+                    element[ "attempt" ],
+                    element["score"]
                 ));
             });		
         }
         else{
             parsedDataArray.push( new submissionModel(
-              element[ "id" ].toString(),
-              element[ "courseid" ].toString(),
-              element[ "assignment_group_id" ].toString(),
-              element[ "name" ],
-              element[ "points_possible" ]
+              jsonObj[ "id" ].toString(),
+              jsonObj[ "coursestudentid" ].toString(),
+              jsonObj[ "user_id" ].toString(),
+              jsonObj[ "assignment_id" ],
+              jsonObj[ "attempt" ],
+              jsonObj["score"]
             ));		
         }
 
@@ -92,31 +94,37 @@ export default class submissionModel{
       });
     }
 
-    static async getSubmissionsFromCanvas(assignmentArray) {
+    static async getSubmissionsFromCanvas(assignmentArray, studentArray) {
       try {
-
-        console.log()
-        // Perform the HTTP request to get the data        
-        return assignmentArray.map((element) => {
-          return new Promise(async (resolve, reject) => {
-            try {
-              const courseId = element['courseid'];
-              const assignmentId = element['canvasid'];
-              const requestDef = await util.getCanvasRequestDefinition('submissions', new Map([ ['courseId', courseId], ['assignmentId', assignmentId] ]));
-              const data = await util.makeHttpsRequest(requestDef); 
-              const parsedSubmissions = JSON.parse(data);
-              console.log(parsedSubmissions);
+        assArr = assignmentArray.map(e => e.canvasid);
+        stdArr = studentArray.map(e => e.canvasid);
+       /*
+        const subs = [];
+        for(const element of assignmentArray){
+          const courseId = element['courseid'];
+          const assignmentId = element['canvasid'];
+          const requestDef = await util.getCanvasRequestDefinition('submissions', new Map([ ['courseId', courseId], ['assignmentId', assignmentId] ]));
+          const data = await util.makeHttpsRequest(requestDef); 
+          let parsedSubmissions;
+          try{
+            parsedSubmissions = JSON.parse(data);
+            if(Array.isArray(parsedSubmissions)){
               for(const a of parsedSubmissions){
                 a.courseid = courseId;
+                subs.push(a);
               }
-              resolve(parsedSubmissions);
-            } catch (error) {
-              resolve(error);
-            }           
-          });
-        });
+            }
+          }
+          catch(err){
+            subs.push(err);
+          }
+        }
+        return subs;
+      */
+        
       } catch (error) {
-        console.error('Error during assignment processing:', error);
+        console.error('Error during submission processing:', error);
+        return error;
       }
     }
 

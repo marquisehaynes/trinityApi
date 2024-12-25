@@ -10,7 +10,7 @@ export function getCanvasRequestDefinition(targetObj,params){
             ["courses", '/api/v1/courses?per_page=1000'],
             ["assignmentgroups", '/api/v1/courses/' + params.get('courseId') + '/assignment_groups?per_page=1000'],
             ['assignments','/api/v1/courses/' + params.get('courseId') + '/assignments?per_page=1000'],
-            ['submissions','api/v1/courses/' + params.get('courseId') + '/assignments/' + params.get('assignmentId') + '/submissions?per_page=35000']
+            ['submissions','/api/v1/courses/' + params.get('courseId') + '/students/submissions?student_ids[]=all&workflow_state=graded&per_page=35000']
         ]);
     }
     else{
@@ -26,7 +26,13 @@ export function getCanvasRequestDefinition(targetObj,params){
         method: 'GET',
         headers: {
             'Authorization': 'Bearer ' + canvasToken
-        }
+        },
+        agent: new https.Agent({
+            keepAlive: true,
+            maxSockets: 15,
+            keepAliveMsecs: 60000,
+            maxFreeSockets: 5
+        })
     };
 }
 

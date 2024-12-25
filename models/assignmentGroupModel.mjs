@@ -35,10 +35,10 @@ export default class assignmentGroupModel{
         }
         else{
             parsedDataArray.push( new assignmentGroupModel(
-                element[ "id" ].toString(),
-                element[ "courseId" ],
-                element[ "name" ],
-                element[ "group_weight" ]
+              jsonObj[ "id" ].toString(),
+              jsonObj[ "courseId" ],
+              jsonObj[ "name" ],
+              jsonObj[ "group_weight" ]
             ));		
         }
 
@@ -85,15 +85,6 @@ export default class assignmentGroupModel{
             await client.release();
           }
         });
-    }
-
-    static async getAll(pgPool){
-      const client = await pgPool.connect();
-      const result = await client.query({
-        rowMode: 'array',
-        text: 'select * from assignmentgroup;'
-      });
-      return result;
     }
 
     static async getAssignmentGroupsFromCanvas(courseArray) {

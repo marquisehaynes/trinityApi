@@ -18,44 +18,34 @@ export default class studentModel{
         this.sortablename      = sortableName;
     }
   
-    toObj(){
-        return retObj = {
-            'canvasid'          : this.canvasid,
-            'fullname'          : this.fullname,
-            'sortablename'      : this.sortablename
-        };
-    }
-    
-    stringify(){
-        let orderedKeys = [ 'canvasid', 'fullname', 'sortablename' ];
-        return JSON.stringify(this.toObj(), orderedKeys );
-    }
-
     static convertJSONtoArray(jsonObj) {
-        let parsedDataArray = [];
+        const data = [];
 
         if( Array.isArray( jsonObj ) ) {
-            jsonObj.forEach( element => {
-                parsedDataArray.push( new studentModel(
-                    element[ "id" ],
-                    element[ "name" ],
-                    element[ "course_code" ],
-                    element[ "start_at" ],
-                    element[ "end_at" ]
-                ));
-            });		
+          for(const element of jsonObj){
+            const std = new studentModel(
+              element["user"]["id"],
+              element["user"]["name"],
+              element["user"]["sortable_name"]
+            );
+
+            if(!data.includes(JSON.stringify(std))){
+              data.push(JSON.stringify(std));
+            }
+          }	
         }
         else{
-          parsedDataArray.push( new studentModel(
-            jsonObj[ "id" ],
-            jsonObj[ "name" ],
-            jsonObj[ "course_code" ],
-            jsonObj[ "start_at" ],
-            jsonObj[ "end_at" ]
-          ));		
+          const std = new studentModel(
+            jsonObj["user"]["id"],
+            jsonObj["user"]["name"],
+            jsonObj["user"]["sortable_name"]
+          );
+          if(!data.includes(JSON.stringify(std))){
+            data.push(JSON.stringify(std));
+          }
         }
 
-        return parsedDataArray;     
+        return data.map(e => JSON.parse(e));   
     }
 
     static async upsertCsvData( csvFilePath, pgPool ) {
@@ -100,7 +90,7 @@ export default class studentModel{
         });
     }
 
-    static async processStudents(parsedData,pgPool){
+    static async processStudents(parsedData, pgPool){
       let studentArr = [];
       const courseStudentArray = [];
       if (parsedData.length > 0) {
@@ -133,7 +123,7 @@ export default class studentModel{
       }
     }
 
-    static async getStudentsFromCanvas(courseArray, pgPool) {
+    static async getStudentsFromCanvas(courseArray) {
       try {
         // Perform the HTTP request to get the data        
         return courseArray.map((element) => {

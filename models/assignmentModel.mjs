@@ -35,11 +35,11 @@ export default class assignmentModel{
         }
         else{
             parsedDataArray.push( new assignmentModel(
-              element[ "id" ].toString(),
-              element[ "courseid" ].toString(),
-              element[ "assignment_group_id" ].toString(),
-              element[ "name" ],
-              element[ "points_possible" ]
+              jsonObj[ "id" ].toString(),
+              jsonObj[ "courseid" ].toString(),
+              jsonObj[ "assignment_group_id" ].toString(),
+              jsonObj[ "name" ],
+              jsonObj[ "points_possible" ]
             ));		
         }
 
