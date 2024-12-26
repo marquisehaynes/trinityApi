@@ -105,11 +105,13 @@ app.get( '/syncall', async ( req, res ) => {
 					pq.processendtime = Date.now();
 					pq.processstatus = 'Failed';
 					pq.failuremessage = error;
+					pq.failedbatches = finalStudentArray.length;
 					console.log('Student Load Failed!');
 				}
 				finally{
+					pq.failedbatches = studentLoadResult.results.map(e => e.success == false);
 					pq.postToDb(pgPool);
-					pq = new models.processQueueProcessModel(null, 'Load Data', 'Running', Date.now(), null, 'Student', finalStudentArray.length);
+					pq = new models.processQueueProcessModel(null, 'Load Data', 'Running', Date.now(), null, 'CourseStudent', finalStudentArray.length);
 					pq.postToDb(pgPool);
 				}
 			}
