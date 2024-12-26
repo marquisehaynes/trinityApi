@@ -32,6 +32,7 @@ app.get( '/syncall', async ( req, res ) => {
 		let finalStudentArray;
 		let finalCourseStudentArray;
 		let finalSubmissionsArray;
+		let courseRetStatus =false;
 		const pq = new models.processQueueProcessModel(null, 'Retrieve Canvas Data', 'Running', Date.now(), null, 'All',1);
 		pq.postToDb(pgPool);
 		try {
@@ -80,6 +81,7 @@ app.get( '/syncall', async ( req, res ) => {
 			console.log('Data Retrieval Complete!');
 			pq.processendtime = Date.now();
 			pq.processstatus = 'Complete';
+			courseRetStatus = true;
 		} 
 		catch (error) {
 			pq.processendtime = Date.now();
