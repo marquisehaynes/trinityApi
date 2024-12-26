@@ -4,11 +4,12 @@ import  * as util from '../util/index.js';
 import Parser from 'json2csv';
 
 export default class assignmentModel{    
-
+  static columns = new Set(['canvasid', 'assignmentgroupid', 'courseid', 'name', 'pointspossible']);
+  static conflictColumn = 'canvasid';
+  canvasid;
   assignmentgroupid;
     name;
     pointspossible;
-    canvasid;
     courseid;
 
     constructor( canvasId,courseId, groupId, assName, pointsPossible ){

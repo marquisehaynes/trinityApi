@@ -4,7 +4,8 @@ import  * as util from '../util/index.js';
 import Parser from 'json2csv';
 
 export default class studentModel{   
-  static columns = ['canvasid', 'fullname', 'sortablename'];
+  static columns = new Set(['canvasid', 'fullname', 'sortablename']);
+  static conflictColumn = 'canvasid';
   canvasid;
   fullname;
   sortablename;
@@ -21,7 +22,7 @@ export default class studentModel{
       if( Array.isArray( jsonObj ) ) {
         for(const element of jsonObj){
           const std = new studentModel(
-            element["user"]["id"],
+            element["user"]["id"].toString(),
             element["user"]["name"],
             element["user"]["sortable_name"]
           );
@@ -33,7 +34,7 @@ export default class studentModel{
       }
       else{
         const std = new studentModel(
-          jsonObj["user"]["id"],
+          jsonObj["user"]["id"].toString(),
           jsonObj["user"]["name"],
           jsonObj["user"]["sortable_name"]
         );

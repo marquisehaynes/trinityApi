@@ -10,7 +10,7 @@ export function getCanvasRequestDefinition(targetObj,params){
             ["courses", '/api/v1/courses?per_page=1000'],
             ["assignmentgroups", '/api/v1/courses/' + params.get('courseId') + '/assignment_groups?per_page=1000'],
             ['assignments','/api/v1/courses/' + params.get('courseId') + '/assignments?per_page=1000'],
-            ['submissions','/api/v1/courses/' + params.get('courseId') + '/students/submissions?student_ids[]=all&workflow_state=graded&per_page=35000']
+            ['submissions','/api/v1/courses/' + params.get('courseId') + '/students/submissions?student_ids[]=all&include[]=user&workflow_state=graded&per_page=35000']
         ]);
     }
     else{
@@ -78,53 +78,66 @@ export function getAllFromTable(tableName) {
     });
 }
 
-export async function upsertJsonToDb(jsonContent, tableName, tableColumns) {
+export async function upsertJsonToDb(jsonContent, tableName, tableColumns, conflictColumn, pool) {
+    let status = true;
     try {
-        // Read the CSV file synchronously
-        const fileContent = fs.readFileSync('path/to/your.csv', 'utf-8');
-    
-        // Parse the CSV data
-        const records = parse(fileContent, {
-        columns: true, // Use the first row as column headers
-        skip_empty_lines: true,
-        });
-    
-        // Store results
         const results = [];
     
         // Start a transaction
         const client = await pool.connect();
         try {
-        await client.query('BEGIN');
-    
-        // Iterate through records and insert them into the PostgreSQL table
-        for (const record of records) {
-            try {
-            await client.query(
-                'INSERT INTO your_table (column1, column2, column3) VALUES ($1, $2, $3)',
-                [record.column1, record.column2, record.column3]
-            );
-            results.push({ record, success: true, error: null });
-            } catch (insertError) {
-            console.error('Insert error for record:', record, insertError.message);
-            results.push({ record, success: false, error: insertError.message });
+            await client.query('BEGIN');
+        
+            // Iterate through records and insert them into the PostgreSQL table
+            for (const record of jsonContent) {
+                const row = new Array(tableColumns.length);
+                let queryStr = '';
+                let conflictString = '';
+                const conflictColumnArr = [];
+                try {
+                    let valStr = '';
+                    let valIndex = 1;                    
+                    for(const col of tableColumns){
+                        valStr += '$'+valIndex + ', ';
+                        valIndex++;
+                        row.push(record[col]);
+                        if(col != conflictColumn){
+                            conflictColumnArr.push(col +' = EXCLUDED.' + col)
+                        }
+                    }
+                    valStr = valStr.trim().endsWith(',') ? valStr.trim().substring(0, valStr.trim().length - 1) : valStr.trim();
+                    queryStr =  'INSERT INTO '+ tableName +' ('+ Array.from(tableColumns).join(', ') + ') VALUES ('+ valStr +')';
+                    conflictString = 'ON CONFLICT (' + conflictColumn + ') DO UPDATE SET ' +  conflictColumnArr.join(', ') + ';';
+                    queryStr = queryStr + ' ' + conflictString;
+                    await client.query( queryStr, row.filter( e => e != undefined ));
+                    results.push({ record, success: true, error: null });
+                } 
+                catch (insertError) {
+                    console.error('Insert error for ' + tableName + ' record:', record, insertError.message);
+                    console.error('Query:', queryStr);
+                    console.error('Data:',  row.filter( e => e != undefined ));
+                    results.push({ record, success: false, error: insertError.message });
+                    status = false;
+                }
             }
-        }
-    
-        await client.query('COMMIT');
-        console.log('All records processed.');
-        } catch (transactionError) {
-        await client.query('ROLLBACK');
-        console.error('Transaction error:', transactionError.message);
-        } finally {
-        client.release();
-        }
-    
-        // Log results
-        console.log('Results:', results);
+        
+            await client.query('COMMIT');
+            console.log('All ' + tableName + ' records processed.');
+        } 
+        catch (transactionError) {
+            await client.query('ROLLBACK');
+            console.error('Transaction error:', transactionError.message);
+            status = false;
+        } 
+        finally {
+            client.release();
+            // Log results
+           // console.log('Results:', results);            
+        }    
+        
     } catch (err) {
-        console.error('Error reading or processing the CSV file:', err.message);
+        console.error('Error connecting to database:', err.message);
     } finally {
-        await pool.end();
+        return status;
     }
 }

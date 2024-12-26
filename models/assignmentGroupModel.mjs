@@ -1,21 +1,21 @@
 import * as fs         from 'fs';
-import * as CopyStream from 'pg-copy-streams';
 import csv from 'csv-parser';
 import  * as util from '../util/index.js';  
 import Parser from 'json2csv';
 
 export default class assignmentGroupModel{    
-
+  static columns = new Set(['canvasid', 'courseid', 'name', 'weight']);
+  static conflictColumn = 'canvasid';
     canvasid;
     courseid;
-    groupname;
+    name;
     weight;
     
 
     constructor( canvasId, courseId, groupName, Weight){
         this.canvasid          = canvasId;
         this.courseid        = courseId;
-        this.groupname = groupName;
+        this.name = groupName;
         this.weight         = Weight;
     }
   

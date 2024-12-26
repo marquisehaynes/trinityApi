@@ -4,7 +4,8 @@ import  * as util from '../util/index.js';
 import Parser from 'json2csv';
 
 export default class submissionModel{    
-
+  static columns = new Set(['canvasid', 'attemptnumber', 'assignmentid', 'studentid', 'coursestudentid', 'score']);
+  static conflictColumn = 'canvasid';
     canvasid;
     attemptnumber;
     assignmentid;
@@ -31,9 +32,9 @@ export default class submissionModel{
                     element[ "id" ].toString(),
                     element[ "coursestudentid" ].toString(),
                     element[ "user_id" ].toString(),
-                    element[ "assignment_id" ],
+                    element[ "assignment_id" ].toString(),
                     element[ "attempt" ],
-                    element["score"]
+                    element["score"] ? element["score"] : 0
                 ));
             });		
         }
@@ -42,9 +43,9 @@ export default class submissionModel{
               jsonObj[ "id" ].toString(),
               jsonObj[ "coursestudentid" ].toString(),
               jsonObj[ "user_id" ].toString(),
-              jsonObj[ "assignment_id" ],
+              jsonObj[ "assignment_id" ].toString(),
               jsonObj[ "attempt" ],
-              jsonObj["score"]
+              jsonObj["score"] ? jsonObj["score"] : 0
             ));		
         }
 
@@ -92,40 +93,6 @@ export default class submissionModel{
           await client.release();
         }
       });
-    }
-
-    static async getSubmissionsFromCanvas(assignmentArray, studentArray) {
-      try {
-        assArr = assignmentArray.map(e => e.canvasid);
-        stdArr = studentArray.map(e => e.canvasid);
-       /*
-        const subs = [];
-        for(const element of assignmentArray){
-          const courseId = element['courseid'];
-          const assignmentId = element['canvasid'];
-          const requestDef = await util.getCanvasRequestDefinition('submissions', new Map([ ['courseId', courseId], ['assignmentId', assignmentId] ]));
-          const data = await util.makeHttpsRequest(requestDef); 
-          let parsedSubmissions;
-          try{
-            parsedSubmissions = JSON.parse(data);
-            if(Array.isArray(parsedSubmissions)){
-              for(const a of parsedSubmissions){
-                a.courseid = courseId;
-                subs.push(a);
-              }
-            }
-          }
-          catch(err){
-            subs.push(err);
-          }
-        }
-        return subs;
-      */
-        
-      } catch (error) {
-        console.error('Error during submission processing:', error);
-        return error;
-      }
     }
 
     static async processAssignments(parsedData, pgPool){

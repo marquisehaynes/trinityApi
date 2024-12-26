@@ -1,10 +1,9 @@
 import * as fs         from 'fs';
-import * as CopyStream from 'pg-copy-streams';
 import csv from 'csv-parser';
-import studentModel from './studentModel.mjs';
 
 export default class courseStudentModel{    
-
+  static columns = new Set(['courseid', 'studentid', 'uniqueid']);
+  static conflictColumn = 'uniqueid';
     courseid;
     studentid;
     uniqueid;
