@@ -34,8 +34,11 @@ app.get( '/syncall', async ( req, res ) => {
 		let finalSubmissionsArray;
 		let courseRetStatus =false;
 		let studentLoadResult;
+		let courseStudentLoadResult;
 		const pq = new models.processQueueProcessModel(null, 'Retrieve Canvas Data', 'Running', Date.now(), null, 'All',1);
-		pq.postToDb(pgPool);
+		await pq.postToDb(pgPool);
+		const pq1 = new models.processQueueProcessModel(null, 'DataSync', 'Running', Date.now(), null, 'All',1);
+		await pq1.postToDb(pgPool);
 		try {
 			const courseArray = await models.courseModel.getAllCoursesFromCanvas(pgPool);
 			for(const course of courseArray){
@@ -91,10 +94,10 @@ app.get( '/syncall', async ( req, res ) => {
 			pq.failuremessage = error;
 		}
 		finally{
-			if(courseRetStatus){
-				pq.postToDb(pgPool);
+			await pq.postToDb(pgPool);
+			if(courseRetStatus){				
 				pq = new models.processQueueProcessModel(null, 'Load Data', 'Running', Date.now(), null, 'Student', finalStudentArray.length);
-				pq.postToDb(pgPool);
+				await pq.postToDb(pgPool);
 				try {
 					studentLoadResult = await util.upsertJsonToDb(finalStudentArray, 'student', models.studentModel.columns, models.studentModel.conflictColumn, pgPool);
 					console.log('Student Load Complete!');
@@ -110,19 +113,34 @@ app.get( '/syncall', async ( req, res ) => {
 				}
 				finally{
 					pq.failedbatches = studentLoadResult.results.map(e => e.success == false);
-					pq.postToDb(pgPool);
-					pq = new models.processQueueProcessModel(null, 'Load Data', 'Running', Date.now(), null, 'CourseStudent', finalStudentArray.length);
-					pq.postToDb(pgPool);
+					await pq.postToDb(pgPool);
+					pq = new models.processQueueProcessModel(null, 'Load Data', 'Running', Date.now(), null, 'CourseStudent', finalCourseStudentArray.length);
+					try {
+						pq.postToDb(pgPool);
+						courseStudentLoadResult = await util.upsertJsonToDb(finalCourseStudentArray, 'coursestudent', models.courseStudentModel.columns, models.courseStudentModel.conflictColumn, pgPool);
+						console.log('CourseStudent Load Complete!');
+						pq.processendtime = Date.now();
+						pq.processstatus = 'Complete';
+					} 
+					catch (error) {
+						pq.processendtime = Date.now();
+						pq.processstatus = 'Failed';
+						pq.failuremessage = error;
+						pq.failedbatches = finalCourseStudentArray.length;
+						console.log('CourseStudent Load Failed!');
+					} 
+					finally{
+						pq.failedbatches = courseStudentLoadResult.results.map(e => e.success == false);
+						await pq.postToDb(pgPool);
+						pq = new models.processQueueProcessModel(null, 'Load Data', 'Running', Date.now(), null, 'AssignmentGroup', finalAssGrpArray.length);
+					}
+					
 				}
 			}
 		}
         
 
 		
-		
-		
-		const courseStudentLoadResult = await util.upsertJsonToDb(finalCourseStudentArray, 'coursestudent', models.courseStudentModel.columns, models.courseStudentModel.conflictColumn, pgPool);
-		console.log('CourseStudent Load Complete!');
 		const assGrpLoadResult = await util.upsertJsonToDb(finalAssGrpArray, 'assignmentgroup', models.assignmentGroupModel.columns, models.assignmentGroupModel.conflictColumn, pgPool);
 		console.log('Assignment Group Load Complete!');
 		const assLoadResult = await util.upsertJsonToDb(finalAssArray, 'assignment', models.assignmentModel.columns, models.assignmentModel.conflictColumn, pgPool);
