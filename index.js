@@ -33,6 +33,7 @@ app.get( '/syncall', async ( req, res ) => {
 		let finalCourseStudentArray;
 		let finalSubmissionsArray;
 		let courseRetStatus =false;
+		let studentLoadResult;
 		const pq = new models.processQueueProcessModel(null, 'Retrieve Canvas Data', 'Running', Date.now(), null, 'All',1);
 		pq.postToDb(pgPool);
 		try {
@@ -90,24 +91,27 @@ app.get( '/syncall', async ( req, res ) => {
 			pq.failuremessage = error;
 		}
 		finally{
-			pq.postToDb(pgPool);
-			pq = new models.processQueueProcessModel(null, 'Load Data', 'Running', Date.now(), null, 'Student', finalStudentArray.length);
-			pq.postToDb(pgPool);
-			let studentLoadResult;
-			try {
-				studentLoadResult = await util.upsertJsonToDb(finalStudentArray, 'student', models.studentModel.columns, models.studentModel.conflictColumn, pgPool);
-				console.log('Student Load Complete!');
-				pq.processendtime = Date.now();
-				pq.processstatus = 'Complete';
-			} 
-			catch (error) {
-				pq.processendtime = Date.now();
-				pq.processstatus = 'Failed';
-				pq.failuremessage = error;
-				console.log('Student Load Failed!');
-			}
-			finally{
+			if(courseRetStatus){
 				pq.postToDb(pgPool);
+				pq = new models.processQueueProcessModel(null, 'Load Data', 'Running', Date.now(), null, 'Student', finalStudentArray.length);
+				pq.postToDb(pgPool);
+				try {
+					studentLoadResult = await util.upsertJsonToDb(finalStudentArray, 'student', models.studentModel.columns, models.studentModel.conflictColumn, pgPool);
+					console.log('Student Load Complete!');
+					pq.processendtime = Date.now();
+					pq.processstatus = 'Complete';
+				} 
+				catch (error) {
+					pq.processendtime = Date.now();
+					pq.processstatus = 'Failed';
+					pq.failuremessage = error;
+					console.log('Student Load Failed!');
+				}
+				finally{
+					pq.postToDb(pgPool);
+					pq = new models.processQueueProcessModel(null, 'Load Data', 'Running', Date.now(), null, 'Student', finalStudentArray.length);
+					pq.postToDb(pgPool);
+				}
 			}
 		}
         

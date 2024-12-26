@@ -138,6 +138,6 @@ export async function upsertJsonToDb(jsonContent, tableName, tableColumns, confl
     } catch (err) {
         console.error('Error connecting to database:', err.message);
     } finally {
-        return status;
+        return { 'status' : status, 'results' : results };
     }
 }
