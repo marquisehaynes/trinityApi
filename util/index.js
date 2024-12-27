@@ -80,9 +80,8 @@ export function getAllFromTable(tableName) {
 
 export async function upsertJsonToDb(jsonContent, tableName, tableColumns, conflictColumn, pool) {
     let status = true;
+    const results = [];
     try {
-        const results = [];
-    
         // Start a transaction
         const client = await pool.connect();
         try {
