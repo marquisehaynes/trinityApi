@@ -153,7 +153,7 @@ export async function getRecentLoadStatus(pool){
     const result = await client.query( query );
     client.release();
     if(Array.isArray(result.rows)){
-        const ret = result.rows.map( e =>{ return e.targetobject });
+        const ret = result.rows.map( e => { return e.targetobject.toLowerCase(); });
         return ret;
     }
     else{

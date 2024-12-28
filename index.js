@@ -52,10 +52,10 @@ app.get( '/syncall', async ( req, res ) => {
 				const assRequestDef = await util.getCanvasRequestDefinition('assignments', new Map([ ['courseId', courseId] ]));
 				const studentRequestDef = await util.getCanvasRequestDefinition('students', new Map([ ['courseId', courseId] ]));
 				const submissionRequestDef = await util.getCanvasRequestDefinition('submissions', new Map([ ['courseId', courseId] ]));
-				const assGrpData = await util.makeHttpsRequest(assGrpRequestDef); 			
-				const assData = await util.makeHttpsRequest(assRequestDef); 
-				const stdData = await util.makeHttpsRequest(studentRequestDef); 
-				const submissionData = await util.makeHttpsRequest(submissionRequestDef); 
+				const assGrpData = loadStatuses.includes('assignmentgroup') ? '[]' : await util.makeHttpsRequest(assGrpRequestDef); 			
+				const assData = loadStatuses.includes('assignment') ? '[]' : await util.makeHttpsRequest(assRequestDef); 
+				const stdData = loadStatuses.includes('student') ? '[]' : await util.makeHttpsRequest(studentRequestDef); 
+				const submissionData = loadStatuses.includes('submission') ? '[]' : await util.makeHttpsRequest(submissionRequestDef); 
 				const parsedAssignments = JSON.parse(assData);
 				const parsedAssignmentGroups = JSON.parse(assGrpData);
 				const parsedCourseStudents = JSON.parse(stdData);
@@ -80,34 +80,59 @@ app.get( '/syncall', async ( req, res ) => {
 					subArray.push(sub);
 				}
 			}
-			finalAssGrpArray = await models.assignmentGroupModel.convertJSONtoArray(assGrpArray);
-			finalAssArray = await models.assignmentModel.convertJSONtoArray(assArray);
-			const assIdLst = finalAssArray.map(e => e.canvasid);
-			finalStudentArray = await models.studentModel.convertJSONtoArray(courseStudentArray);
-			finalCourseStudentArray = await models.courseStudentModel.convertJSONtoArray(courseStudentArray);
-			const csIdLst = finalCourseStudentArray.map(e => e.uniqueid);
-			finalSubmissionsArray = await models.submissionModel.convertJSONtoArray(subArray).filter(e => { return assIdLst.includes(e.assignmentid) && csIdLst.includes(e.coursestudentid); });
+			let assIdLst;
+			let csIdLst;
+			if(!loadStatuses.includes('assignmentgroup')){
+				finalAssGrpArray = await models.assignmentGroupModel.convertJSONtoArray(assGrpArray);
+				finalAssArray = await models.assignmentModel.convertJSONtoArray(assArray);
+				assIdLst = finalAssArray.map(e => e.canvasid);
+			}
+			if(!loadStatuses.includes('student')){
+				finalStudentArray = await models.studentModel.convertJSONtoArray(courseStudentArray);
+			}
+			if(!loadStatuses.includes('coursestudent')){
+				finalCourseStudentArray = await models.courseStudentModel.convertJSONtoArray(courseStudentArray);
+				csIdLst = finalCourseStudentArray.map(e => e.uniqueid);
+			}
+			if(!loadStatuses.includes('assignmentsubmission')){
+				finalSubmissionsArray = await models.submissionModel.convertJSONtoArray(subArray).filter(e => { return assIdLst.includes(e.assignmentid) && csIdLst.includes(e.coursestudentid); });
+			
+			}
 			console.log('Data Retrieval Complete!');
 			courseRetStatus = true;
 			pq.processendtime = new Date().toISOString();
 			pq.processstatus = 'Completed';
 		} 
 		catch (error) {
+			console.log('Data retrieval error: ', error);
 			pq.processendtime = new Date().toISOString();
 			pq.processstatus = 'Failed';
 			pq.failedbatches = 1;
 			pq.failuremessage = error;
+
+			pq1.failuremessage = error;
+			pq1.processendtime = new Date().toISOString();
+			pq1.processstatus = 'Failed';
+			pq1.post(pgPool);
 		}
 		finally{
 			await pq.post(pgPool);
 			if(courseRetStatus){				
-				pq = new models.processQueueProcessModel( 'Load Data', 'Student', finalStudentArray.length);
+				pq = new models.processQueueProcessModel( 'Load Data', 'Student', Array.isArray(finalStudentArray) ? finalStudentArray.length : 0 );
 				await pq.post(pgPool);
 				try {
-					studentLoadResult = await util.upsertJsonToDb(finalStudentArray, 'student', models.studentModel.columns, models.studentModel.conflictColumn, pgPool);
-					console.log('Student Load Complete!');
-					pq.processendtime = new Date().toISOString();
-					pq.processstatus = 'Completed';
+					if(loadStatuses.includes('student')){
+						console.log('Student Load Skipped!');
+						pq.processendtime = new Date().toISOString();
+						pq.processstatus = 'Skipped';
+						studentLoadResult = 'Skipped';
+					}
+					else{
+						studentLoadResult = await util.upsertJsonToDb(finalStudentArray, 'student', models.studentModel.columns, models.studentModel.conflictColumn, pgPool);
+						console.log('Student Load Complete!');
+						pq.processendtime = new Date().toISOString();
+						pq.processstatus = 'Completed';
+					}					
 				} 
 				catch (error) {
 					pq.processendtime = new Date().toISOString();
@@ -117,15 +142,23 @@ app.get( '/syncall', async ( req, res ) => {
 					console.log('Student Load Failed!');
 				}
 				finally{
-					pq.failedbatches = studentLoadResult.results.map(e => e.success == false).length;
+					pq.failedbatches = studentLoadResult != 'Skipped' ? studentLoadResult.results.map(e => e.success == false).length : 0;
 					await pq.post(pgPool);
-					pq = new models.processQueueProcessModel( 'Load Data', 'CourseStudent', finalCourseStudentArray.length);
+					pq = new models.processQueueProcessModel( 'Load Data', 'CourseStudent', Array.isArray(finalCourseStudentArray) ? finalCourseStudentArray.length : 0);
 					await pq.post(pgPool);
 					try {
-						courseStudentLoadResult = await util.upsertJsonToDb(finalCourseStudentArray, 'coursestudent', models.courseStudentModel.columns, models.courseStudentModel.conflictColumn, pgPool);
-						console.log('CourseStudent Load Complete!');
-						pq.processendtime = new Date().toISOString();
-						pq.processstatus = 'Completed';
+						if(loadStatuses.includes('coursestudent')){
+							console.log('CourseStudent Load Skipped!');
+							pq.processendtime = new Date().toISOString();
+							pq.processstatus = 'Skipped';
+							courseStudentLoadResult = 'Skipped';
+						}
+						else{
+							courseStudentLoadResult = await util.upsertJsonToDb(finalCourseStudentArray, 'coursestudent', models.courseStudentModel.columns, models.courseStudentModel.conflictColumn, pgPool);
+							console.log('CourseStudent Load Complete!');
+							pq.processendtime = new Date().toISOString();
+							pq.processstatus = 'Completed';
+						}						
 					} 
 					catch (error) {
 						pq.processendtime = new Date().toISOString();
@@ -135,15 +168,23 @@ app.get( '/syncall', async ( req, res ) => {
 						console.log('CourseStudent Load Failed!');
 					} 
 					finally{
-						pq.failedbatches = courseStudentLoadResult.results.map(e => e.success == false).length;
+						pq.failedbatches = courseStudentLoadResult != 'Skipped' ? courseStudentLoadResult.results.map(e => e.success == false).length : 0;
 						await pq.post(pgPool);
-						pq = new models.processQueueProcessModel( 'Load Data', 'AssignmentGroup', finalAssGrpArray.length );
+						pq = new models.processQueueProcessModel( 'Load Data', 'AssignmentGroup', Array.isArray(finalAssGrpArray) ? finalAssGrpArray.length : 0 );
 						await pq.post(pgPool);
 						try {
-							assGrpLoadResult = await util.upsertJsonToDb(finalAssGrpArray, 'assignmentgroup', models.assignmentGroupModel.columns, models.assignmentGroupModel.conflictColumn, pgPool);
-							console.log('AssignmentGroup Load Complete!');
-							pq.processendtime = new Date().toISOString();
-							pq.processstatus = 'Completed';
+							if(loadStatuses.includes('assignmentgroup')){
+								console.log('AssignmentGroup Load Skipped!');
+								pq.processendtime = new Date().toISOString();
+								pq.processstatus = 'Skipped';
+								assGrpLoadResult = 'Skipped';
+							}
+							else{
+								assGrpLoadResult = await util.upsertJsonToDb(finalAssGrpArray, 'assignmentgroup', models.assignmentGroupModel.columns, models.assignmentGroupModel.conflictColumn, pgPool);
+								console.log('AssignmentGroup Load Complete!');
+								pq.processendtime = new Date().toISOString();
+								pq.processstatus = 'Completed';
+							}							
 						} catch (error) {
 							pq.processendtime = new Date().toISOString();
 							pq.processstatus = 'Failed';
@@ -152,15 +193,23 @@ app.get( '/syncall', async ( req, res ) => {
 							console.log('AssignmentGroup Load Failed!');
 						}
 						finally{
-							pq.failedbatches = assGrpLoadResult.results.map(e => e.success == false).length;
+							pq.failedbatches = assGrpLoadResult != 'Skipped' ? assGrpLoadResult.results.map(e => e.success == false).length : 0;
 							await pq.post(pgPool);
-							pq = new models.processQueueProcessModel( 'Load Data', 'Assignment', finalAssArray.length);
+							pq = new models.processQueueProcessModel( 'Load Data', 'Assignment', Array.isArray(finalAssArray) ? finalAssArray.length : 0 );
 							await pq.post(pgPool);
 							try {
-								assLoadResult = await util.upsertJsonToDb(finalAssArray, 'assignment', models.assignmentModel.columns, models.assignmentModel.conflictColumn, pgPool);
-								console.log('Assignment Load Complete!');
-								pq.processendtime = new Date().toISOString();
-								pq.processstatus = 'Completed';
+								if(loadStatuses.includes('assignment')){
+									console.log('Assignment Load Skipped!');
+									pq.processendtime = new Date().toISOString();
+									pq.processstatus = 'Skipped';
+									assLoadResult = 'Skipped';
+								}
+								else{
+									assLoadResult = await util.upsertJsonToDb(finalAssArray, 'assignment', models.assignmentModel.columns, models.assignmentModel.conflictColumn, pgPool);
+									console.log('Assignment Load Complete!');
+									pq.processendtime = new Date().toISOString();
+									pq.processstatus = 'Completed';
+								}								
 							} 
 							catch (error) {
 								pq.processendtime = new Date().toISOString();
@@ -170,15 +219,23 @@ app.get( '/syncall', async ( req, res ) => {
 								console.log('Assignment Load Failed!');
 							}
 							finally{
-								pq.failedbatches = assLoadResult.results.map(e => e.success == false).length;
+								pq.failedbatches = assLoadResult != 'Skipped' ? assLoadResult.results.map(e => e.success == false).length : 0;
 								await pq.post(pgPool);
-								pq = new models.processQueueProcessModel( 'Load Data', 'AssignmentSubmission', finalSubmissionsArray.length);
+								pq = new models.processQueueProcessModel( 'Load Data', 'AssignmentSubmission', Array.isArray(finalSubmissionsArray) ? finalSubmissionsArray.length : 0 );
 								await pq.post(pgPool);
 								try {
-									submissionLoadResult = await util.upsertJsonToDb(finalSubmissionsArray, 'assignmentsubmission', models.submissionModel.columns, models.submissionModel.conflictColumn, pgPool);
-									console.log('Submission Load Complete!');
-									pq.processendtime = new Date().toISOString();
-									pq.processstatus = 'Completed';
+									if(loadStatuses.includes('assignmentsubmission')){
+										console.log('Submission Load Skipped!');
+										pq.processendtime = new Date().toISOString();
+										pq.processstatus = 'Skipped';
+										submissionLoadResult = 'Skipped';
+									}
+									else{
+										submissionLoadResult = await util.upsertJsonToDb(finalSubmissionsArray, 'assignmentsubmission', models.submissionModel.columns, models.submissionModel.conflictColumn, pgPool);
+										console.log('Submission Load Complete!');
+										pq.processendtime = new Date().toISOString();
+										pq.processstatus = 'Completed';
+									}									
 								} 
 								catch (error) {
 									pq.processendtime = new Date().toISOString();
@@ -188,32 +245,36 @@ app.get( '/syncall', async ( req, res ) => {
 									console.log('Submission Load Failed!');
 								}
 								finally{
-									pq.failedbatches = submissionLoadResult.results.map(e => e.success == false).length;
+									pq.failedbatches = submissionLoadResult != 'Skipped' ? submissionLoadResult.results.map(e => e.success == false).length : 0;
 									await pq.post(pgPool);
 									const retMap = {
 										'course' : true,
-										'assignmentGroup' : assGrpLoadResult,
-										'assignment' : assLoadResult,
-										'student' : studentLoadResult,
-										'courseStudent' : courseStudentLoadResult,
-										'submission' : submissionLoadResult
+										'assignmentGroup' : Array.isArray(assGrpLoadResult.results) ? assGrpLoadResult.status : assGrpLoadResult,
+										'assignment' : Array.isArray(assLoadResult.results) ? assLoadResult.status : assGrpLoadResult,
+										'student' : Array.isArray(studentLoadResult.results) ? studentLoadResult.status : studentLoadResult,
+										'courseStudent' : Array.isArray(courseStudentLoadResult.results) ? courseStudentLoadResult.status : courseStudentLoadResult,
+										'submission' : Array.isArray(submissionLoadResult.results) ? submissionLoadResult.status : submissionLoadResult
 									};
+									let resBool = true;
+									const finalRes = Object.keys(retMap).map((key) => {
+										const tmp = retMap[key] === true || retMap[key] === 'Skipped';
+										resBool = resBool && tmp;
+
+									});
 									pq1.processendtime = new Date().toISOString();
 									pq1.processstatus = 'Completed';
 									pq1.post(pgPool);
 									// Send the response
-									res.status(200).send(retMap);
-								}
-								
-							}
-							
+									res.status(200).send(resBool);
+								}								
+							}							
 						}
-					}
-					
+					}					
 				}
 			}
 		}
-    } catch (error) {
+    } 
+	catch (error) {
         console.error('Error during the sync operation:', error);
         res.status(500).send('Internal Server Error');
 		pq1.failuremessage = error;
