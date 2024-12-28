@@ -1,9 +1,5 @@
-import * as fs         from 'fs';
-import * as CopyStream from 'pg-copy-streams';
-import csv from 'csv-parser';
 import Parser	   	 from 'json2csv';
 import  * as util from '../util/index.js';
-import { writeFile } from 'fs/promises';
 
 export default class courseModel{    
 
@@ -46,48 +42,6 @@ export default class courseModel{
         }
 
         return parsedDataArray;     
-    }
-
-    static async upsertCsvData( csvFilePath, pgPool ) {
-      const client = await pgPool.connect();
-      // Start reading the CSV file
-      const csvData = [];
-      console.log('Attempting to read from '+ csvFilePath);
-      fs.createReadStream(csvFilePath)
-        .pipe(csv())
-        .on('data', (row) => {
-          csvData.push(row);
-        })
-        .on('end', async () => {
-          try {
-            // Process rows in batches to prevent exceeding query length limits
-            for (const row of csvData) {
-              const { canvasid, coursename, coursedescription, startdate, enddate } = row;
-              
-              const query = `
-                INSERT INTO course (canvasid, coursename, coursedescription, startdate, enddate)
-                VALUES ($1, $2, $3, $4, $5)
-                ON CONFLICT (canvasid)
-                DO UPDATE SET 
-                  coursename = EXCLUDED.coursename, 
-                  coursedescription = EXCLUDED.coursedescription,
-                  startdate = EXCLUDED.startdate,
-                  enddate = EXCLUDED.enddate
-                  ;
-              `;
-    
-              const values = [canvasid, coursename, coursedescription, startdate, enddate];
-              
-              // Run the upsert query for each row
-              await client.query(query, values);
-            }    
-          } catch (err) {
-            console.error('Error during upsert:', err);
-          } finally {
-            // Close the pool connection when done
-            await client.release();
-          }
-        });
     }
 
     static async getAllCoursesFromCanvas(pgPool) {

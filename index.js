@@ -21,18 +21,11 @@ app.listen( 3000, () => {
     console.log( "Server running on port 3000" );
    });
 
-app.get('/testpq', async (req, res) => {
-	const pq = new models.processQueueProcessModel('Retrieve Canvas Data', 'All', 1);
-	await pq.post(pgPool);
-	pq.processendtime = new Date().toISOString();
-	pq.processstatus = 'Completed';
-	await pq.post(pgPool);
-});
-
 app.get( '/syncall', async ( req, res ) => {
 	const pq1 = new models.processQueueProcessModel('DataSync', 'All',1);
 	await pq1.post(pgPool);
     try {
+		const loadStatuses = await util.getRecentLoadStatus(pgPool);
 		const assGrpArray = [];
 		const assArray = [];
 		const courseStudentArray = [];
@@ -97,7 +90,7 @@ app.get( '/syncall', async ( req, res ) => {
 			console.log('Data Retrieval Complete!');
 			courseRetStatus = true;
 			pq.processendtime = new Date().toISOString();
-			pq.processstatus = 'Complete';
+			pq.processstatus = 'Completed';
 		} 
 		catch (error) {
 			pq.processendtime = new Date().toISOString();
@@ -114,7 +107,7 @@ app.get( '/syncall', async ( req, res ) => {
 					studentLoadResult = await util.upsertJsonToDb(finalStudentArray, 'student', models.studentModel.columns, models.studentModel.conflictColumn, pgPool);
 					console.log('Student Load Complete!');
 					pq.processendtime = new Date().toISOString();
-					pq.processstatus = 'Complete';
+					pq.processstatus = 'Completed';
 				} 
 				catch (error) {
 					pq.processendtime = new Date().toISOString();
@@ -132,7 +125,7 @@ app.get( '/syncall', async ( req, res ) => {
 						courseStudentLoadResult = await util.upsertJsonToDb(finalCourseStudentArray, 'coursestudent', models.courseStudentModel.columns, models.courseStudentModel.conflictColumn, pgPool);
 						console.log('CourseStudent Load Complete!');
 						pq.processendtime = new Date().toISOString();
-						pq.processstatus = 'Complete';
+						pq.processstatus = 'Completed';
 					} 
 					catch (error) {
 						pq.processendtime = new Date().toISOString();
@@ -150,7 +143,7 @@ app.get( '/syncall', async ( req, res ) => {
 							assGrpLoadResult = await util.upsertJsonToDb(finalAssGrpArray, 'assignmentgroup', models.assignmentGroupModel.columns, models.assignmentGroupModel.conflictColumn, pgPool);
 							console.log('AssignmentGroup Load Complete!');
 							pq.processendtime = new Date().toISOString();
-							pq.processstatus = 'Complete';
+							pq.processstatus = 'Completed';
 						} catch (error) {
 							pq.processendtime = new Date().toISOString();
 							pq.processstatus = 'Failed';
@@ -167,7 +160,7 @@ app.get( '/syncall', async ( req, res ) => {
 								assLoadResult = await util.upsertJsonToDb(finalAssArray, 'assignment', models.assignmentModel.columns, models.assignmentModel.conflictColumn, pgPool);
 								console.log('Assignment Load Complete!');
 								pq.processendtime = new Date().toISOString();
-								pq.processstatus = 'Complete';
+								pq.processstatus = 'Completed';
 							} 
 							catch (error) {
 								pq.processendtime = new Date().toISOString();
@@ -185,7 +178,7 @@ app.get( '/syncall', async ( req, res ) => {
 									submissionLoadResult = await util.upsertJsonToDb(finalSubmissionsArray, 'assignmentsubmission', models.submissionModel.columns, models.submissionModel.conflictColumn, pgPool);
 									console.log('Submission Load Complete!');
 									pq.processendtime = new Date().toISOString();
-									pq.processstatus = 'Complete';
+									pq.processstatus = 'Completed';
 								} 
 								catch (error) {
 									pq.processendtime = new Date().toISOString();

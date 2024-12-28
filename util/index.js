@@ -1,5 +1,6 @@
 import fs from 'fs';
 import https	     from 'https';
+import Parser from 'json2csv';
 
 export function getCanvasRequestDefinition(targetObj,params){
     const canvasToken= JSON.parse(fs.readFileSync('config.json','utf8')).canvas.authToken;
@@ -139,4 +140,29 @@ export async function upsertJsonToDb(jsonContent, tableName, tableColumns, confl
     } finally {
         return { 'status' : status, 'results' : results };
     }
+}
+
+export async function getRecentLoadStatus(pool){
+    const query = `SELECT DISTINCT ON (targetobject) processid, targetobject, processstarttime
+                    FROM processqueue
+                    WHERE processstatus LIKE 'Complete%' 
+                    AND processname = 'Load Data' 
+                    AND processstarttime >= NOW() - INTERVAL '24 hours'
+                    ORDER BY targetobject, processstarttime DESC;`
+    const client = await pool.connect();
+    const result = await client.query( query );
+    client.release();
+    if(Array.isArray(result.rows)){
+        const ret = result.rows.map( e =>{ return e.targetobject });
+        return ret;
+    }
+    else{
+        return result.rows.targetobject;
+    }
+}
+
+export async function saveCsv(parsedData, obj){
+    const assCSV = Parser.parse(parsedData);
+    const assFileName = './extracts/'+ obj +'/' +obj+ 'Data_' + new Date().toISOString().replace(/[: ]/g, '_') + '.csv';
+    fs.writeFileSync(assFileName, assCSV);    
 }

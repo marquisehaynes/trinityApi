@@ -1,8 +1,3 @@
-import * as fs         from 'fs';
-import * as CopyStream from 'pg-copy-streams';
-import csv from 'csv-parser';
-import  * as util from '../util/index.js';  
-import Parser from 'json2csv';
 
 export default class processQueueProcessModel{    
   static columns = new Set(['processid', 'processname', 'processstatus', 'processstarttime', 'processendtime', 'targetobject', 'failuremessage', 'totalbatches', 'failedbatches']);
