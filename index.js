@@ -45,7 +45,7 @@ app.get( '/syncall', async ( req, res ) => {
 		await pq.post(pgPool);
 		
 		try {
-			const courseArray = await models.courseModel.getAllCoursesFromCanvas(pgPool);
+			const courseArray = await models.courseModel.getAllCoursesFromCanvas(pgPool,false);
 			for(const course of courseArray){
 				const courseId = course['canvasid'];
 				const assGrpRequestDef = util.getCanvasRequestDefinition('assignmentgroups', new Map([ ['courseId', courseId] ]));
@@ -256,11 +256,10 @@ app.get( '/syncall', async ( req, res ) => {
 										'submission' : Array.isArray(submissionLoadResult.results) ? submissionLoadResult.status : submissionLoadResult
 									};
 									let resBool = true;
-									const finalRes = Object.keys(retMap).map((key) => {
+									for(const key of Object.keys(retMap)){
 										const tmp = retMap[key] === true || retMap[key] === 'Skipped';
 										resBool = resBool && tmp;
-
-									});
+									}
 									pq1.processendtime = new Date().toISOString();
 									pq1.processstatus = 'Completed';
 									pq1.post(pgPool);

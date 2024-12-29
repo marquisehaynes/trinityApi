@@ -46,7 +46,7 @@ export default class courseModel{
         return parsedDataArray;     
     }
 
-    static async getAllCoursesFromCanvas(pgPool) {
+    static async getAllCoursesFromCanvas(pgPool, writeCSV) {
       try {
         // Perform the HTTP request to get the data
         const requestDef = util.getCanvasRequestDefinition('courses', null);
@@ -54,10 +54,12 @@ export default class courseModel{
         const data = await util.makeHttpsRequest(requestDef); 
         const parsedData = JSON.parse(data);
         const parsedDataArray = this.convertJSONtoArray(parsedData);
-        console.log('Retrieved Course Data, attempting to parse and save as csv');
-        const parsedDataCSV = Parser.parse(parsedDataArray); 
-        fs.writeFileSync(fileName, parsedDataCSV);        
-        await this.upsertCsvData(fileName, pgPool);
+        if(writeCSV === true){
+          console.log('Retrieved Course Data, attempting to parse and save as csv');
+          const parsedDataCSV = Parser.parse(parsedDataArray); 
+          fs.writeFileSync(fileName, parsedDataCSV);        
+          await this.upsertCsvData(fileName, pgPool);
+        }       
         console.log('Course data upsert completed!');
         return parsedDataArray;
       } catch (error) {
