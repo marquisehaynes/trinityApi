@@ -1,17 +1,26 @@
-import { Component } from '@angular/core';
-import { bootstrapApplication } from '@angular/platform-browser';
+/*!
 
-@Component({
-  selector: 'app-root',
-  template: `
-    <h1>Hello from {{ name }}!</h1>
-    <a target="_blank" href="https://angular.dev/overview">
-      Learn more about Angular
-    </a>
-  `,
-})
-export class App {
-  name = 'Angular';
+ =========================================================
+ * Light Bootstrap Dashboard Angular - v1.9.0
+ =========================================================
+
+ * Product Page: https://www.creative-tim.com/product/light-bootstrap-dashboard-angular2
+ * Copyright 2020 Creative Tim (http://www.creative-tim.com)
+ * Licensed under MIT
+
+ =========================================================
+
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+ */
+import { enableProdMode } from '@angular/core';
+import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+
+import { AppModule } from './app/app.module';
+import { environment } from './environments/environment';
+
+if (environment.production) {
+  enableProdMode();
 }
 
-bootstrapApplication(App);
+platformBrowserDynamic().bootstrapModule(AppModule);

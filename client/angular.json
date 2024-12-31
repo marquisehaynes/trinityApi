@@ -1,60 +1,165 @@
 {
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
-  "cli": {
-    "analytics": "1e1de97b-a744-405a-8b5a-0397bb3d01ce"
-  },
+  "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "demo": {
-      "architect": {
+    "lbd-free-angular-cli": {
+      "root": "",
+      "sourceRoot": "src",
+      "projectType": "application",
+      "targets": {
         "build": {
-          "builder": "@angular/build:application",
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "dist",
+            "index": "src/index.html",
+            "main": "src/main.ts",
+            "tsConfig": "src/tsconfig.json",
+            "polyfills": "src/polyfills.ts",
+            "assets": [
+              "src/assets",
+              "src/favicon.ico"
+            ],
+            "styles": [
+              "node_modules/perfect-scrollbar/css/perfect-scrollbar.css",
+              "node_modules/animate.css/animate.min.css",
+              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "src/assets/sass/light-bootstrap-dashboard.scss",
+              "src/assets/css/demo.css"
+            ],
+            "scripts": [
+              "node_modules/jquery/dist/jquery.js",
+              "node_modules/bootstrap/dist/js/bootstrap.js",
+              "node_modules/bootstrap-notify/bootstrap-notify.js",
+              "node_modules/chartist/dist/chartist.js"
+            ]
+          },
           "configurations": {
-            "development": {
-              "extractLicenses": false,
-              "namedChunks": true,
-              "optimization": false,
-              "sourceMap": true
-            },
             "production": {
-              "aot": true,
-              "extractLicenses": true,
-              "namedChunks": false,
               "optimization": true,
               "outputHashing": "all",
-              "sourceMap": false
+              "sourceMap": false,
+              "namedChunks": false,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ]
+            },
+            "development": {
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true,
+              "buildOptimizer": false,
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": false,
+                  "inlineCritical": true
+                },
+                "fonts": true
+              },
+              "outputHashing": "all"
             }
-          },
-          "options": {
-            "assets": [],
-            "index": "src/index.html",
-            "browser": "src/main.ts",
-            "outputPath": "dist/demo",
-            "polyfills": ["zone.js"],
-            "scripts": [],
-            "styles": ["src/global_styles.css"],
-            "tsConfig": "tsconfig.app.json"
           }
         },
         "serve": {
-          "builder": "@angular/build:dev-server",
-          "configurations": {
-            "development": {
-              "buildTarget": "demo:build:development"
-            },
-            "production": {
-              "buildTarget": "demo:build:production"
-            }
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "browserTarget": "lbd-free-angular-cli:build"
           },
-          "defaultConfiguration": "development"
+          "configurations": {
+            "production": {
+              "browserTarget": "lbd-free-angular-cli:build:production"
+            },
+            "development": {
+              "browserTarget": "lbd-free-angular-cli:build:development"
+            },
+            "defaultConfiguration": "development"
+          }
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "lbd-free-angular-cli:build"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "src/test.ts",
+            "karmaConfig": "./karma.conf.js",
+            "polyfills": "src/polyfills.ts",
+            "scripts": [
+              "node_modules/jquery/dist/jquery.js",
+              "node_modules/bootstrap/dist/js/bootstrap.js",
+              "node_modules/bootstrap-notify/bootstrap-notify.js",
+              "node_modules/chartist/dist/chartist.js"
+            ],
+            "styles": [
+              "node_modules/animate.css/animate.min.css",
+              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "src/assets/sass/light-bootstrap-dashboard.scss",
+              "src/assets/css/demo.css"
+            ],
+            "assets": [
+              "src/assets",
+              "src/favicon.ico"
+            ],
+            "tsConfig": "src/tsconfig.json"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "src/tsconfig.json"
+            ],
+            "exclude": []
+          }
         }
-      },
-      "prefix": "app",
+      }
+    },
+    "lbd-free-angular-cli-e2e": {
+      "root": "e2e",
+      "sourceRoot": "e2e",
       "projectType": "application",
-      "root": "",
-      "schematics": {},
-      "sourceRoot": "src"
+      "targets": {
+        "e2e": {
+          "builder": "@angular-devkit/build-angular:protractor",
+          "options": {
+            "protractorConfig": "./protractor.conf.js",
+            "devServerTarget": "lbd-free-angular-cli:serve"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "e2e/tsconfig.json"
+            ],
+            "exclude": []
+          }
+        }
+      }
     }
   },
-  "version": 1
+  "defaultProject": "lbd-free-angular-cli",
+  "schematics": {
+    "@schematics/angular:component": {
+      "prefix": "app",
+      "style": "scss"
+    },
+    "@schematics/angular:directive": {
+      "prefix": "app"
+    }
+  },
+  "cli": {
+    "analytics": false
+  }
 }
