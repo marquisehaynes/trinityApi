@@ -4,7 +4,7 @@ import  * as util from '../util/index.js';
 import * as fs from 'fs';
 
 export default class courseModel{    
-
+    static columns = ['canvasid', 'coursename', 'coursedescription', 'startdate', 'enddate'];
     canvasid;
     coursename;
     coursedescription;
@@ -15,8 +15,8 @@ export default class courseModel{
         this.canvasid          = canvasId;
         this.coursename        = courseName;
         this.coursedescription = courseDescription;
-        this.startdate         = startDate;
-        this.enddate           = endDate;
+        this.startdate         = startDate ? startDate : '1/1/1970';
+        this.enddate           = endDate ? endDate : '12/31/9999';
     }
 
     static convertJSONtoArray(jsonObj) {
@@ -59,9 +59,15 @@ export default class courseModel{
           const parsedDataCSV = Parser.parse(parsedDataArray); 
           fs.writeFileSync(fileName, parsedDataCSV);        
           await this.upsertCsvData(fileName, pgPool);
+          console.log('Course data upsert completed!');
+          return parsedDataArray;
         }       
-        console.log('Course data upsert completed!');
-        return parsedDataArray;
+        else{
+          const res = util.upsertJsonToDb(parsedDataArray, 'course', courseModel.columns, 'canvasid', pgPool);
+          console.log('Course data upsert completed!');
+          return parsedDataArray;
+        }
+        
       } catch (error) {
         console.error('Error during course data processing:', error);
       }
@@ -98,7 +104,7 @@ export default class courseModel{
               const values = [canvasid, coursename, coursedescription, startdate, enddate];
               
               // Run the upsert query for each row
-              await client.query(query, values);
+              const res = await client.query(query, values);
             }    
           } catch (err) {
             console.error('Error during upsert:', err);

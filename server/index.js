@@ -23,9 +23,11 @@ app.listen( 3000, () => {
 
 app.get( '/testQuery', async ( req, res ) => {
     const client = await pgPool.connect();
+	const csArr = await client.query('SELECT uniqueid FROM coursestudent');
+	const assArr = await client.query('SELECT canvasid from assignment');
     const retMap = {
-        'csArr' : await client.query('SELECT uniqueid FROM coursestudent'),
-        'assArr' : await client.query('SELECT canvasid from assignment')
+        'csArr' : csArr,
+        'assArr' : assArr
     };
     await client.release();
     res.send(retMap);    
@@ -105,6 +107,10 @@ app.get( '/syncall', async ( req, res ) => {
 				csIdLst = finalCourseStudentArray.map(e => e.uniqueid);
 			}
 			if(!loadStatuses.includes('assignmentsubmission')){
+				const client = await pgPool.connect();				
+				assIdLst = assIdLst ? assIdLst : (await client.query('SELECT canvasid from assignment')).rows.map(e => { return e.canvasid; } );
+				csIdLst = csIdLst ? csIdLst : (await client.query('SELECT uniqueid from coursestudent')).rows.map(e => { return e.uniqueid; } );
+				await client.release();
 				finalSubmissionsArray = await models.submissionModel.convertJSONtoArray(subArray).filter(e => { return assIdLst.includes(e.assignmentid) && csIdLst.includes(e.coursestudentid); });
 			
 			}
