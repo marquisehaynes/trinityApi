@@ -1,8 +1,8 @@
 export default class assignmentModel{    
-  static columns = new Set(['canvasid', 'assignmentgroupid', 'courseid', 'name', 'pointspossible']);
+  static columns = new Set(['canvasid', 'groupid', 'courseid', 'name', 'pointspossible']);
   static conflictColumn = 'canvasid';
   canvasid;
-  assignmentgroupid;
+  groupid;
   name;
   pointspossible;
   courseid;
@@ -10,7 +10,7 @@ export default class assignmentModel{
   constructor( canvasId,courseId, groupId, assName, pointsPossible ){
     this.canvasid = canvasId;
     this.courseid = courseId;
-    this.assignmentgroupid = groupId;
+    this.groupid = groupId;
     this.name = assName;
     this.pointspossible = pointsPossible ? pointsPossible : 0;
   }
