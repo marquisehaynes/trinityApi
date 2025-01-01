@@ -108,9 +108,9 @@ app.get( '/syncall', async ( req, res ) => {
 			pq.processendtime = new Date().toISOString();
 			pq.processstatus = 'Failed';
 			pq.failedbatches = 1;
-			pq.failuremessage = error;
+			pq.failuremessage = JSON.serialize(error);
 
-			pq1.failuremessage = error;
+			pq1.failuremessage = JSON.serialize(error);
 			pq1.processendtime = new Date().toISOString();
 			pq1.processstatus = 'Failed';
 			pq1.post(pgPool);
@@ -137,7 +137,7 @@ app.get( '/syncall', async ( req, res ) => {
 				catch (error) {
 					pq.processendtime = new Date().toISOString();
 					pq.processstatus = 'Failed';
-					pq.failuremessage = error;
+					pq.failuremessage = JSON.serialize(error);
 					pq.failedbatches = finalStudentArray.length;
 					console.log('Student Load Failed!');
 				}
@@ -163,7 +163,7 @@ app.get( '/syncall', async ( req, res ) => {
 					catch (error) {
 						pq.processendtime = new Date().toISOString();
 						pq.processstatus = 'Failed';
-						pq.failuremessage = error;
+						pq.failuremessage = JSON.serialize(error);
 						pq.failedbatches = finalCourseStudentArray.length;
 						console.log('CourseStudent Load Failed!');
 					} 
@@ -188,7 +188,7 @@ app.get( '/syncall', async ( req, res ) => {
 						} catch (error) {
 							pq.processendtime = new Date().toISOString();
 							pq.processstatus = 'Failed';
-							pq.failuremessage = error;
+							pq.failuremessage = JSON.serialize(error);
 							pq.failedbatches = finalAssGrpArray.length;
 							console.log('AssignmentGroup Load Failed!');
 						}
@@ -214,7 +214,7 @@ app.get( '/syncall', async ( req, res ) => {
 							catch (error) {
 								pq.processendtime = new Date().toISOString();
 								pq.processstatus = 'Failed';
-								pq.failuremessage = error;
+								pq.failuremessage = JSON.serialize(error);
 								pq.failedbatches = finalAssArray.length;
 								console.log('Assignment Load Failed!');
 							}
@@ -240,7 +240,7 @@ app.get( '/syncall', async ( req, res ) => {
 								catch (error) {
 									pq.processendtime = new Date().toISOString();
 									pq.processstatus = 'Failed';
-									pq.failuremessage = error;
+									pq.failuremessage = JSON.serialize(error);
 									pq.failedbatches = finalSubmissionsArray.length;
 									console.log('Submission Load Failed!');
 								}
@@ -276,7 +276,7 @@ app.get( '/syncall', async ( req, res ) => {
 	catch (error) {
         console.error('Error during the sync operation:', error);
         res.status(500).send('Internal Server Error');
-		pq1.failuremessage = error;
+		pq1.failuremessage = JSON.serialize(error);
 		pq1.processendtime = new Date().toISOString();
 		pq1.processstatus = 'Failed';
 		pq1.post(pgPool);
