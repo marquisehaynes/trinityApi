@@ -299,7 +299,6 @@ input:focus {
 }
 .sidebar .logo .simple-text,
 .bootstrap-navbar .logo .simple-text {
-  text-transform: uppercase;
   padding: 5px 0px;
   display: block;
   font-size: 18px;
@@ -416,7 +415,6 @@ input:focus {
 }
 .sidebar .logo .simple-text,
 .bootstrap-navbar .logo .simple-text {
-  text-transform: uppercase;
   padding: 5px 0px 5px 15px;
   display: block;
   font-size: 18px;
