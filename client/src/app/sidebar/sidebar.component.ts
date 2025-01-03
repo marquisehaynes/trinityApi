@@ -30,7 +30,8 @@ export const ROUTES: RouteInfo[] = [
     { path: '/assignments', title: 'Assignments',  icon:'pe-7s-note2', class: '' },
     { path: '/submissions', title: 'Assignment Submissions',  icon:'pe-7s-news-paper', class: '' },
     { path: '/transcripts', title: 'Transcripts',  icon:'pe-7s-science', class: '' },
-    { path: '/timesheets', title: 'Timesheets',  icon:'pe-7s-map-marker', class: '' }
+    { path: '/timesheets', title: 'Timesheets',  icon:'pe-7s-map-marker', class: '' },
+    { path: '/reports', title: 'Reports',  icon: 'pe-7s-graph', class: '' }
 ];
 
 @Component({
