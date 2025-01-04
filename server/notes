@@ -1,10 +1,21 @@
-1. Handle courses *
-	-Sets array of courses for multi use
-2. Handle students *
-	-Returns array of students and array of courseStudents
-3. Handle Assignment Groups *
-	-returns map containing array of Assignment Groups, array of students, array of courseStudents
-4. Handle Assignments *
-	-returns map containing Map of Assignment Groups to Assignments, array of students, array of courseStudents
-5.Handle submissions *
-	-returns completion status
+Update DB so that each table has a field called id
+Ensure all PK/FKs are updated
+Configure Object Id Prefixes
+	-Course 001
+	-Student 002
+	-CourseStudent 003
+	-AssignmentGroup 004
+	-Assignment 005
+	-AssignmentQuestion 006
+	-Submission 007
+	-Timesheet 008
+	-TimesheetEntry 009
+
+	-User a01
+	-Persona a02
+	-PersonaPermission a03
+	-ProcessQueueProcess a04
+	-AccessLog a05
+
+Id should be Case-Insensitive and unique
+Id should be a total of 10 characters
