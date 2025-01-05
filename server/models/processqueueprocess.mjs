@@ -3,7 +3,7 @@ export default class processQueueProcessModel{
   static columns = new Set(['processid', 'processname', 'processstatus', 'processstarttime', 'processendtime', 'targetobject', 'failuremessage', 'totalbatches', 'failedbatches']);
   static conflictColumn = 'canvasid';
   
-  processid;
+  id;
   processname;
   processstatus;
   processstarttime;
@@ -35,9 +35,9 @@ export default class processQueueProcessModel{
         let queryStr;
         if( this.processid ){
           
-          queryStr =  `INSERT INTO processqueue ( processid, processname, processstatus, processstarttime, processendtime, targetobject, failuremessage, totalbatches, failedbatches ) 
+          queryStr =  `INSERT INTO processqueue ( id, processname, processstatus, processstarttime, processendtime, targetobject, failuremessage, totalbatches, failedbatches ) 
                      VALUES ( $1, $2, $3, $4, $5, $6, $7 , $8, $9)
-                     ON CONFLICT (processid) 
+                     ON CONFLICT (id) 
                      DO UPDATE SET 
                      processstatus = EXCLUDED.processstatus,
                      processendtime = EXCLUDED.processendtime,
@@ -48,17 +48,17 @@ export default class processQueueProcessModel{
         else{
           queryStr =  `INSERT INTO processqueue ( processname, processstatus, processstarttime, targetobject, totalbatches, failedbatches ) 
                      VALUES ( $1, $2, $3, $4, $5, $6 )
-                     RETURNING processid
+                     RETURNING id
                      `;
         }
         
         const result = await client.query( queryStr, row );
         if(result.rows.length > 0){
-          this.processid = result.rows[0].processid;
+          this.id = result.rows[0].id;
         }  
         
         await client.query('COMMIT');
-        console.log('ProcessQueue item upserted. Id: '+this.processid + ' Name: ' + this.processname + ' Object: '+ this.targetobject + ' Status: '+ this.processstatus);
+        console.log('ProcessQueue item upserted. Id: '+this.id + ' Name: ' + this.processname + ' Object: '+ this.targetobject + ' Status: '+ this.processstatus);
     } 
     catch (transactionError) {
         await client.query('ROLLBACK');

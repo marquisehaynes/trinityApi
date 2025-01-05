@@ -5,6 +5,7 @@ import fs		   		 from 'fs';
 import pg		   		 from 'pg';
 
 const app				 = new express();
+app.use(express.json());
 const PORT = 3000;
 const dbConfig	 = JSON.parse( fs.readFileSync( 'config.json','utf8' ) ).database;
 const pgPool = new pg.Pool({
@@ -26,9 +27,19 @@ app.get( '/query', async ( req, res ) => {
 	const payload = req.body;
 	const query = `SELECT * FROM ${payload.objectType}` +  (payload.recordId ? ` WHERE id = '${payload.recordId}'` : '');
 	const client = await pgPool.connect();
-	const queryRes = await client.query(query);
-	await client.release();
-	res.send( queryRes.rows.length > 0 ? queryRes : [] );    
+	try{
+		const queryRes = await client.query(query);
+		res.send( queryRes.rows.length > 0 ? {
+			"rowCount" : queryRes.rowCount,
+			"rows": queryRes.rows
+		} : [] );   
+	}
+	catch(err){
+		res.status(400).send( err ); 
+	}
+	finally{
+		client.release();
+	}
 });
 
 

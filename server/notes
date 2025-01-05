@@ -1,6 +1,6 @@
-Update DB so that each table has a field called id
+Update DB so that each table has a field called id - Done
 Ensure all PK/FKs are updated
-Configure Object Id Prefixes
+Configure Object Id Prefixes - Done
 	-Course 001
 	-Student 002
 	-CourseStudent 003
