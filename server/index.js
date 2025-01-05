@@ -3,8 +3,11 @@ import  * as util from './util/index.js';
 import express	   from 'express';
 import fs		   		 from 'fs';
 import pg		   		 from 'pg';
+import LRUCache from 'lru-cache';
+
 
 const app				 = new express();
+const cache = new LRUCache({ max: 100 });
 app.use(express.json());
 const PORT = 3000;
 const dbConfig	 = JSON.parse( fs.readFileSync( 'config.json','utf8' ) ).database;
@@ -18,6 +21,7 @@ const pgPool = new pg.Pool({
 	idleTimeoutMillis : 20000,
 	connectionTimeoutMillis : 20000,
 });
+cache.set('ObjectPrefixes', await util.getObjectPrefixes(pgPool));
 
 app.listen( PORT, () => {
     console.log( "Server running on port 3000" );

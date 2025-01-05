@@ -143,7 +143,7 @@ export async function upsertJsonToDb(jsonContent, tableName, tableColumns, confl
 }
 
 export async function getRecentLoadStatus(pool){
-    const query = `SELECT DISTINCT ON (targetobject) processid, targetobject, processstarttime
+    const query = `SELECT DISTINCT ON (targetobject) id, targetobject, processstarttime
                     FROM processqueue
                     WHERE processstatus LIKE 'Complete%' 
                     AND processname = 'Load Data' 
@@ -160,6 +160,22 @@ export async function getRecentLoadStatus(pool){
         return result.rows.targetobject;
     }
 }
+
+export async function getObjectPrefixes(pool){
+    const query = `SELECT * FROM objectprefixes`;
+    const client = await pool.connect();
+    const result = await client.query( query );
+    client.release();
+    const retMap = new Map();
+    if(Array.isArray(result.rows)){
+        result.rows.map( e => { retMap.set(e.object, e.prefix ) });
+        return ret;
+    }
+    else{
+        return result;
+    }
+}
+
 
 export async function saveCsv(parsedData, obj){
     const assCSV = Parser.parse(parsedData);
