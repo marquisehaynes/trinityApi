@@ -1,6 +1,6 @@
 
 export default class processQueueProcessModel{    
-  static columns = new Set(['processid', 'processname', 'processstatus', 'processstarttime', 'processendtime', 'targetobject', 'failuremessage', 'totalbatches', 'failedbatches']);
+  static columns = new Set(['id', 'processname', 'processstatus', 'processstarttime', 'processendtime', 'targetobject', 'failuremessage', 'totalbatches', 'failedbatches']);
   static conflictColumn = 'canvasid';
   
   id;
@@ -26,14 +26,14 @@ export default class processQueueProcessModel{
     const client = await pgPool.connect();
     let row = new Array(processQueueProcessModel.columns.length); 
     try {
-      if(!this.failuremessage && this.processid ){ this.failuremessage = ''; }
+      if(!this.failuremessage && this.id ){ this.failuremessage = ''; }
         await client.query('BEGIN');        
         for(const col of processQueueProcessModel.columns){
             row.push(this[col]);
         }
         row = row.filter( e => e != undefined );
         let queryStr;
-        if( this.processid ){
+        if( this.id ){
           
           queryStr =  `INSERT INTO processqueue ( id, processname, processstatus, processstarttime, processendtime, targetobject, failuremessage, totalbatches, failedbatches ) 
                      VALUES ( $1, $2, $3, $4, $5, $6, $7 , $8, $9)
