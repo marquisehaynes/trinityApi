@@ -16,6 +16,10 @@ Configure Object Id Prefixes
 	-PersonaPermission a03
 	-ProcessQueueProcess a04
 	-AccessLog a05
+	-RecycleBinRow a06
 
 Id should be Case-Insensitive and unique
-Id should be a total of 10 characters
+Id should be no more and no less than 10 characters
+
+
+Backup DB bash script: pg_dump -s database_name > db.sql
