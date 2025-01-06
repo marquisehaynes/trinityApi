@@ -23,3 +23,14 @@ Id should be no more and no less than 10 characters
 
 
 Backup DB bash script: pg_dump -s database_name > db.sql
+
+Arch - Ideal:
+AppServer - Ubuntu - Host Main and Client Apps - 40GB/4GB/2CPU
+RedisServer - Ubuntu - Host Main Server and Client Session Caches - 120GB/12GB/2CPU
+PostgresServer - Ubuntu - Host Persistent Data - 129GB/8GB/1CPU
+
+Arch - Minimal:
+AppServer - Ubuntu - Host Main and Client Apps - 20GB/4GB/1CPU
+RedisServer - Ubuntu - Host Main Server and Client Session Caches - 80GB/8GB/1CPU
+PostgresServer - Ubuntu - Host Persistent Data - 89GB/4GB/1CPU
+
