@@ -57,14 +57,26 @@ app.get( '/query', async ( req, res ) => {
 
 app.get( '/testQuery', async ( req, res ) => {
     const client = await pgPool.connect();
-	const csArr = await client.query('SELECT uniqueid FROM coursestudent');
-	const assArr = await client.query('SELECT canvasid from assignment');
-    const retMap = {
-        'csArr' : csArr,
-        'assArr' : assArr
-    };
+	const ret = (await client.query(`SELECT gen_id from gen_id('processqueue')`)).rows[0].gen_id;
     await client.release();
-    res.send(retMap);    
+    res.send(ret);    
+});
+
+app.get( '/testPost', async ( req, res ) => {
+	const client = await pgPool.connect();
+	const nextIdQry = await client.query(`SELECT gen_id from gen_id('processqueue');`);
+	const nextId = nextIdQry.rows[0].gen_id;
+	const start = new Date().toISOString();
+	console.log(nextId);
+	
+	const queryStr =  `INSERT INTO processqueue ( id, processname, processstatus, processstarttime, targetobject, totalbatches, failedbatches) 
+				VALUES ( '${nextId}', 'testProcess','Running', '${start}', 'All', 1, 0 )
+				RETURNING id
+				`;
+	const result = await client.query(queryStr);
+	await client.release();
+
+	res.status(200).send(result.rows[0].id);
 });
 
 app.get( '/syncall', async ( req, res ) => {

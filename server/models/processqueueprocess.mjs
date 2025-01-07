@@ -1,7 +1,7 @@
 
 export default class processQueueProcessModel{    
   static columns = new Set(['id', 'processname', 'processstatus', 'processstarttime', 'processendtime', 'targetobject', 'failuremessage', 'totalbatches', 'failedbatches']);
-  static conflictColumn = 'canvasid';
+  static conflictColumn = 'id';
   
   id;
   processname;
@@ -25,6 +25,7 @@ export default class processQueueProcessModel{
   async post(pgPool){
     const client = await pgPool.connect();
     let row = new Array(processQueueProcessModel.columns.length); 
+    let queryStr;
     try {
       if(!this.failuremessage && this.id ){ this.failuremessage = ''; }
         await client.query('BEGIN');        
@@ -32,7 +33,7 @@ export default class processQueueProcessModel{
             row.push(this[col]);
         }
         row = row.filter( e => e != undefined );
-        let queryStr;
+        
         if( this.id ){
           
           queryStr =  `INSERT INTO processqueue ( id, processname, processstatus, processstarttime, processendtime, targetobject, failuremessage, totalbatches, failedbatches ) 
@@ -46,8 +47,10 @@ export default class processQueueProcessModel{
                      `;
         }
         else{
-          queryStr =  `INSERT INTO processqueue ( processname, processstatus, processstarttime, targetobject, totalbatches, failedbatches ) 
-                     VALUES ( $1, $2, $3, $4, $5, $6 )
+          const nextId = await client.query(`SELECT gen_id from gen_id('processqueue')`);
+          row.push( nextId.rows[0].gen_id );
+          queryStr =  `INSERT INTO processqueue ( processname, processstatus, processstarttime, targetobject, totalbatches, failedbatches, id ) 
+                     VALUES ( $1, $2, $3, $4, $5, $6, $7 )
                      RETURNING id
                      `;
         }
@@ -64,7 +67,8 @@ export default class processQueueProcessModel{
         await client.query('ROLLBACK');
         console.error('PQ Transaction error:', transactionError.message);
         console.error('Data: ', row);
-    } 
+        console.error('Query: ', queryStr);
+    }   
     finally {
         client.release();        
     }    

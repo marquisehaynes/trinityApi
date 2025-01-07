@@ -1,3 +1,8 @@
+CREATE SEQUENCE processqueue_serial START 101;
+CREATE SEQUENCE <tablename>_serial START 101;
+SELECT NEXTVAL('<tablename>_serial');
+-----------------------------------------------------------------------------------
+
 CREATE OR REPLACE FUNCTION generate_custom_id(tablename text)
 RETURNS text AS
 $$

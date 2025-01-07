@@ -79,7 +79,7 @@ export function getAllFromTable(tableName) {
     });
 }
 
-export async function upsertJsonToDb(jsonContent, tableName, tableColumns, conflictColumn, pool, prefixes) {
+export async function upsertJsonToDb(jsonContent, tableName, tableColumns, conflictColumn, pool, prefix) {
     let status = true;
     const results = [];
     try {
@@ -90,6 +90,7 @@ export async function upsertJsonToDb(jsonContent, tableName, tableColumns, confl
         
             // Iterate through records and insert them into the PostgreSQL table
             for (const record of jsonContent) {
+                const id = (await client.query(`SELECT gen_id from gen_id('${tableName}')`)).rows[0].gen_id;
                 const row = new Array(tableColumns.length);
                 let queryStr = '';
                 let conflictString = '';
