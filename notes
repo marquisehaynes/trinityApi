@@ -23,6 +23,7 @@ Id should be no more and no less than 10 characters
 
 
 Backup DB bash script: pg_dump -s database_name > db.sql
+Restore DB bash script: docker exec -i container-pg /bin/bash -c "PGPASSWORD=trinnex psql --username nexus studentdata" < dbBackup_01052025_3.sql
 
 Arch - Ideal:
 AppServer - Ubuntu - Host Main and Client Apps - 40GB/4GB/2CPU
