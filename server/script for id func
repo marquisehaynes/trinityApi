@@ -1,0 +1,33 @@
+CREATE OR REPLACE FUNCTION generate_custom_id(tablename text)
+RETURNS text AS
+$$
+DECLARE
+    v_prefix text;
+    v_nextval bigint;
+    v_custom_id text;
+BEGIN
+    -- Get the prefix from objectprefixes table
+    SELECT prefix INTO v_prefix
+    FROM objectprefixes
+    WHERE object = tablename
+    LIMIT 1;
+
+    -- If no prefix found, raise an error
+    IF v_prefix IS NULL THEN
+        RAISE EXCEPTION 'Prefix not found for table: %', tablename;
+    END IF;
+
+    -- Get the next value from the corresponding sequence
+    EXECUTE format('SELECT nextval(''%I_serial'')', tablename) INTO v_nextval;
+
+    -- Combine the prefix and the next sequence value
+    v_custom_id := v_prefix || LPAD(v_nextval::text, 10, '0');
+
+    -- Ensure the total length is exactly 13 characters
+    IF length(v_custom_id) <> 13 THEN
+        RAISE EXCEPTION 'Generated ID length is not 13 characters: %', v_custom_id;
+    END IF;
+
+    RETURN v_custom_id;
+END;
+$$ LANGUAGE plpgsql;
