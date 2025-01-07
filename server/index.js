@@ -18,8 +18,20 @@ const pgPool = new pg.Pool({
 	idleTimeoutMillis : 20000,
 	connectionTimeoutMillis : 20000,
 });
+const objPfx = await util.getObjectPrefixes(pgPool);
 
-app.listen( PORT, () => {
+app.listen( PORT, async () => {
+	let checkBool = true;
+	let failReason;
+	if(Object.getPrototypeOf(objPfx) === Map.prototype){
+			checkBool = objPfx.size > 0;
+			failReason = objPfx.size > 0 ? null : 'No Prefixes returned';
+	}
+	else{
+		checkBool = false;
+		failReason = `Prefix call didn't return a Map`;
+	}
+	console.log('Loaded Object Keys: '+  checkBool + (!checkBool ? (' ' + failReason) : ''));
     console.log( "Server running on port 3000" );
    });
 
@@ -166,7 +178,7 @@ app.get( '/syncall', async ( req, res ) => {
 						studentLoadResult = 'Skipped';
 					}
 					else{
-						studentLoadResult = await util.upsertJsonToDb(finalStudentArray, 'student', models.studentModel.columns, models.studentModel.conflictColumn, pgPool);
+						studentLoadResult = await util.upsertJsonToDb(finalStudentArray, 'student', models.studentModel.columns, models.studentModel.conflictColumn, pgPool, objPfx);
 						console.log('Student Load Complete!');
 						pq.processendtime = new Date().toISOString();
 						pq.processstatus = 'Completed';
@@ -192,7 +204,7 @@ app.get( '/syncall', async ( req, res ) => {
 							courseStudentLoadResult = 'Skipped';
 						}
 						else{
-							courseStudentLoadResult = await util.upsertJsonToDb(finalCourseStudentArray, 'coursestudent', models.courseStudentModel.columns, models.courseStudentModel.conflictColumn, pgPool);
+							courseStudentLoadResult = await util.upsertJsonToDb(finalCourseStudentArray, 'coursestudent', models.courseStudentModel.columns, models.courseStudentModel.conflictColumn, pgPool, objPfx);
 							console.log('CourseStudent Load Complete!');
 							pq.processendtime = new Date().toISOString();
 							pq.processstatus = 'Completed';
@@ -218,7 +230,7 @@ app.get( '/syncall', async ( req, res ) => {
 								assGrpLoadResult = 'Skipped';
 							}
 							else{
-								assGrpLoadResult = await util.upsertJsonToDb(finalAssGrpArray, 'assignmentgroup', models.assignmentGroupModel.columns, models.assignmentGroupModel.conflictColumn, pgPool);
+								assGrpLoadResult = await util.upsertJsonToDb(finalAssGrpArray, 'assignmentgroup', models.assignmentGroupModel.columns, models.assignmentGroupModel.conflictColumn, pgPool, objPfx);
 								console.log('AssignmentGroup Load Complete!');
 								pq.processendtime = new Date().toISOString();
 								pq.processstatus = 'Completed';
@@ -243,7 +255,7 @@ app.get( '/syncall', async ( req, res ) => {
 									assLoadResult = 'Skipped';
 								}
 								else{
-									assLoadResult = await util.upsertJsonToDb(finalAssArray, 'assignment', models.assignmentModel.columns, models.assignmentModel.conflictColumn, pgPool);
+									assLoadResult = await util.upsertJsonToDb(finalAssArray, 'assignment', models.assignmentModel.columns, models.assignmentModel.conflictColumn, pgPool,objPfx);
 									console.log('Assignment Load Complete!');
 									pq.processendtime = new Date().toISOString();
 									pq.processstatus = 'Completed';
@@ -269,7 +281,7 @@ app.get( '/syncall', async ( req, res ) => {
 										submissionLoadResult = 'Skipped';
 									}
 									else{
-										submissionLoadResult = await util.upsertJsonToDb(finalSubmissionsArray, 'assignmentsubmission', models.submissionModel.columns, models.submissionModel.conflictColumn, pgPool);
+										submissionLoadResult = await util.upsertJsonToDb(finalSubmissionsArray, 'assignmentsubmission', models.submissionModel.columns, models.submissionModel.conflictColumn, pgPool,objPfx);
 										console.log('Submission Load Complete!');
 										pq.processendtime = new Date().toISOString();
 										pq.processstatus = 'Completed';

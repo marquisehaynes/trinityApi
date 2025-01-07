@@ -2,7 +2,7 @@
   "database": {
     "username": "nexus",
     "password": "trinnex",
-    "host": "localhost",
+    "host": "postgres",
     "port": "5432",
     "dbName": "studentdata"
   },

@@ -79,7 +79,7 @@ export function getAllFromTable(tableName) {
     });
 }
 
-export async function upsertJsonToDb(jsonContent, tableName, tableColumns, conflictColumn, pool) {
+export async function upsertJsonToDb(jsonContent, tableName, tableColumns, conflictColumn, pool, prefixes) {
     let status = true;
     const results = [];
     try {
@@ -169,7 +169,7 @@ export async function getObjectPrefixes(pool){
     const retMap = new Map();
     if(Array.isArray(result.rows)){
         result.rows.map( e => { retMap.set(e.object, e.prefix ) });
-        return ret;
+        return retMap;
     }
     else{
         return result;
