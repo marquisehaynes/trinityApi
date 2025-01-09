@@ -22,7 +22,7 @@ Id should be Case-Insensitive and unique
 Id should be no more and no less than 10 characters
 
 
-Backup DB bash script: pg_dump -s database_name > db.sql
+Backup DB bash script: docker exec container-pg pg_dump -U nexus -s -F t studentdata > dbBackup_01072025.sql
 Restore DB bash script: docker exec -i container-pg /bin/bash -c "PGPASSWORD=trinnex psql --username nexus studentdata" < dbBackup_01052025_3.sql
 
 Arch - Ideal:
