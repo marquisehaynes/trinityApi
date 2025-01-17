@@ -4,14 +4,14 @@ import  * as util from '../util/index.js';
 import * as fs from 'fs';
 
 export default class courseModel{    
-    static columns = ['canvasid', 'coursename', 'coursedescription', 'startdate', 'enddate'];
+    static columns = [ 'canvasid', 'coursename', 'coursedescription', 'startdate', 'enddate'];
     canvasid;
     coursename;
     coursedescription;
     startdate;
     enddate;
 
-    constructor( canvasId, courseName, courseDescription, startDate, endDate ){
+    constructor( canvasId, courseName, courseDescription, startDate, endDate){
         this.canvasid          = canvasId;
         this.coursename        = courseName;
         this.coursedescription = courseDescription;
@@ -19,43 +19,46 @@ export default class courseModel{
         this.enddate           = endDate ? endDate : '12/31/9999';
     }
 
-    static convertJSONtoArray(jsonObj) {
+    static async convertJSONtoArray(jsonObj) {
         let parsedDataArray = [];
 
         if( Array.isArray( jsonObj ) ) {
-            jsonObj.forEach( element => {
-                parsedDataArray.push( new courseModel(
-                    element[ "id" ],
-                    element[ "name" ],
-                    element[ "course_code" ],
-                    element[ "start_at" ],
-                    element[ "end_at" ]
-                ));
-            });		
+          for(const element of jsonObj){
+            const course = new courseModel(
+              element[ "id" ],
+              element[ "name" ],
+              element[ "course_code" ],
+              element[ "start_at" ],
+              element[ "end_at" ]
+            );
+            parsedDataArray.push( course );
+          }
         }
         else{
-          parsedDataArray.push( new courseModel(
+          const course = new courseModel(
             jsonObj[ "id" ],
             jsonObj[ "name" ],
             jsonObj[ "course_code" ],
             jsonObj[ "start_at" ],
             jsonObj[ "end_at" ]
-          ));		
+          );
+          parsedDataArray.push( course );		
         }
 
         return parsedDataArray;     
     }
 
-    static async getAllCoursesFromCanvas(pgPool, writeCSV) {
+    static async getAllCoursesFromCanvas(pgPool, currentCourseArr, writeCSV) {
       try {
         // Perform the HTTP request to get the data
         const requestDef = util.getCanvasRequestDefinition('courses', null);
-        const fileName = './extracts/courses/courseData_' + new Date().toISOString().replace(/[: ]/g, '_') + '.csv';
         const data = await util.makeHttpsRequest(requestDef); 
         const parsedData = JSON.parse(data);
-        const parsedDataArray = this.convertJSONtoArray(parsedData);
+        const parsedDataArray = this.convertJSONtoArray(parsedData, currentCourseArr);
+
         if(writeCSV === true){
           console.log('Retrieved Course Data, attempting to parse and save as csv');
+          const fileName = './extracts/courses/courseData_' + new Date().toISOString().replace(/[: ]/g, '_') + '.csv';
           const parsedDataCSV = Parser.parse(parsedDataArray); 
           fs.writeFileSync(fileName, parsedDataCSV);        
           await this.upsertCsvData(fileName, pgPool);
@@ -63,7 +66,7 @@ export default class courseModel{
           return parsedDataArray;
         }       
         else{
-          const res = util.upsertJsonToDb(parsedDataArray, 'course', courseModel.columns, 'canvasid', pgPool);
+          const res = util.upsertJsonToDb(parsedDataArray, 'course', courseModel.columns, 'canvasid', pgPool, currentCourseArr);
           console.log('Course data upsert completed!');
           return parsedDataArray;
         }
@@ -114,4 +117,5 @@ export default class courseModel{
           }
         });
     }
+
   }

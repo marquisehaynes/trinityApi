@@ -37,18 +37,6 @@ export function getCanvasRequestDefinition(targetObj,params){
     };
 }
 
-export function writeFilePromise(fileName, data, encodingType) {
-	return new Promise((resolve, reject) => {
-		fs.writeFile(file, data, encodingType, (err) => {
-			if (err) {
-				reject(err);
-			} else {
-				resolve(fileName);
-			}
-		});
-	});
-}
-
 export function makeHttpsRequest(requestDefinition) {
 	return new Promise((resolve, reject) => {
 		https.get(requestDefinition, (response) => {
@@ -79,18 +67,16 @@ export function getAllFromTable(tableName) {
     });
 }
 
-export async function upsertJsonToDb(jsonContent, tableName, tableColumns, conflictColumn, pool, prefix) {
+export async function upsertJsonToDb(jsonContent, tableName, tableColumns, client) {
+
     let status = true;
     const results = [];
     try {
-        // Start a transaction
-        const client = await pool.connect();
         try {
+            // Start a transaction
             await client.query('BEGIN');
-        
             // Iterate through records and insert them into the PostgreSQL table
             for (const record of jsonContent) {
-                const id = (await client.query(`SELECT gen_id from gen_id('${tableName}')`)).rows[0].gen_id;
                 const row = new Array(tableColumns.length);
                 let queryStr = '';
                 let conflictString = '';
@@ -102,13 +88,13 @@ export async function upsertJsonToDb(jsonContent, tableName, tableColumns, confl
                         valStr += '$'+valIndex + ', ';
                         valIndex++;
                         row.push(record[col]);
-                        if(col != conflictColumn){
+                        if(col != 'canvasid'){
                             conflictColumnArr.push(col +' = EXCLUDED.' + col)
                         }
                     }
                     valStr = valStr.trim().endsWith(',') ? valStr.trim().substring(0, valStr.trim().length - 1) : valStr.trim();
-                    queryStr =  'INSERT INTO '+ tableName +' ('+ Array.from(tableColumns).join(', ') + ') VALUES ('+ valStr +')';
-                    conflictString = 'ON CONFLICT (' + conflictColumn + ') DO UPDATE SET ' +  conflictColumnArr.join(', ') + ';';
+                    queryStr =  'INSERT INTO '+ tableName +' (id, '+ Array.from(tableColumns).join(', ') + ') VALUES (DEFAULT, '+ valStr +')';
+                    conflictString = 'ON CONFLICT (canvasid) DO UPDATE SET ' +  conflictColumnArr.join(', ') + ';';
                     queryStr = queryStr + ' ' + conflictString;
                     await client.query( queryStr, row.filter( e => e != undefined ));
                     results.push({ record, success: true, error: null });
@@ -131,7 +117,7 @@ export async function upsertJsonToDb(jsonContent, tableName, tableColumns, confl
             status = false;
         } 
         finally {
-            client.release();
+            
             // Log results
            // console.log('Results:', results);            
         }    
@@ -143,16 +129,16 @@ export async function upsertJsonToDb(jsonContent, tableName, tableColumns, confl
     }
 }
 
-export async function getRecentLoadStatus(pool){
+export async function getRecentLoadStatus(client){
     const query = `SELECT DISTINCT ON (targetobject) id, targetobject, processstarttime
                     FROM processqueue
                     WHERE processstatus LIKE 'Complete%' 
                     AND processname = 'Load Data' 
                     AND processstarttime >= NOW() - INTERVAL '24 hours'
                     ORDER BY targetobject, processstarttime DESC;`
-    const client = await pool.connect();
+    //const client = await pool.connect();
     const result = await client.query( query );
-    client.release();
+   // client.release();
     if(Array.isArray(result.rows)){
         const ret = result.rows.map( e => { return e.targetobject.toLowerCase(); });
         return ret;
@@ -162,21 +148,27 @@ export async function getRecentLoadStatus(pool){
     }
 }
 
-export async function getObjectPrefixes(pool){
-    const query = `SELECT * FROM objectprefixes`;
-    const client = await pool.connect();
-    const result = await client.query( query );
-    client.release();
-    const retMap = new Map();
-    if(Array.isArray(result.rows)){
-        result.rows.map( e => { retMap.set(e.object, e.prefix ) });
-        return retMap;
-    }
-    else{
-        return result;
-    }
+export async function getCurrentDbData(client, objArr){
+	const retMap = {};
+	for(const obj of objArr){
+		const query = `SELECT * FROM ${obj}` ;
+		const queryRes = await client.query(query);
+		retMap[`${obj}`] = queryRes.rows;
+	}
+    return retMap;
 }
 
+export function writeFilePromise(fileName, data, encodingType) {
+	return new Promise((resolve, reject) => {
+		fs.writeFile(file, data, encodingType, (err) => {
+			if (err) {
+				reject(err);
+			} else {
+				resolve(fileName);
+			}
+		});
+	});
+}
 
 export async function saveCsv(parsedData, obj){
     const assCSV = Parser.parse(parsedData);

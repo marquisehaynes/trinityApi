@@ -22,8 +22,7 @@ export default class processQueueProcessModel{
     this.processstarttime = new Date().toISOString();
   }
 
-  async post(pgPool){
-    const client = await pgPool.connect();
+  async post(client){
     let row = new Array(processQueueProcessModel.columns.length); 
     let queryStr;
     try {
@@ -47,10 +46,8 @@ export default class processQueueProcessModel{
                      `;
         }
         else{
-          const nextId = await client.query(`SELECT gen_id from gen_id('processqueue')`);
-          row.push( nextId.rows[0].gen_id );
           queryStr =  `INSERT INTO processqueue ( processname, processstatus, processstarttime, targetobject, totalbatches, failedbatches, id ) 
-                     VALUES ( $1, $2, $3, $4, $5, $6, $7 )
+                     VALUES ( $1, $2, $3, $4, $5, $6, DEFAULT )
                      RETURNING id
                      `;
         }
@@ -68,9 +65,6 @@ export default class processQueueProcessModel{
         console.error('PQ Transaction error:', transactionError.message);
         console.error('Data: ', row);
         console.error('Query: ', queryStr);
-    }   
-    finally {
-        client.release();        
-    }    
+    }
   }
 }
