@@ -376,9 +376,26 @@ app.get('/sync', async (req, res) => {
 			else {
 				const canvasCourses = await util.makeHttpsRequest( util.getCanvasRequestDefinition('courses', null) ); 
 				const parsedCanvasCourses = await models.courseModel.convertJSONtoArray(JSON.parse(canvasCourses));
-				canvasData['course'] = await util.upsertJsonToDb(parsedCanvasCourses, 'course', models.courseModel.columns, client);
-				res.status(200).send(canvasData);
+				const upsertedCourses = await util.upsertJsonToDb(parsedCanvasCourses, 'course', models.courseModel.columns, client);
+				if(upsertedCourses.status){ canvasData['course'] = upsertedCourses.results.map(e => { return e.record; }); }
+				else{ /*throw error*/ }
 			}
+			for(const course of canvasData['course']){
+				const courseId = course['canvasid'];
+				const assGrpRequestDef = util.getCanvasRequestDefinition('assignmentgroups', new Map([ ['courseId', courseId] ]));
+				const assRequestDef = await util.getCanvasRequestDefinition('assignments', new Map([ ['courseId', courseId] ]));
+				const studentRequestDef = await util.getCanvasRequestDefinition('students', new Map([ ['courseId', courseId] ]));
+				const submissionRequestDef = await util.getCanvasRequestDefinition('submissions', new Map([ ['courseId', courseId] ]));
+				const assGrpData = loadStatuses.includes('assignmentgroup') ? currentData['assignmentgroup'] : await util.makeHttpsRequest(assGrpRequestDef); 			
+				const assData = loadStatuses.includes('assignment') ? currentData['assignment'] : await util.makeHttpsRequest(assRequestDef); 
+				const stdData = loadStatuses.includes('student') ? currentData['student'] : await util.makeHttpsRequest(studentRequestDef); 
+				const submissionData = loadStatuses.includes('submission') ? currentData['submission'] : await util.makeHttpsRequest(submissionRequestDef); 
+				const parsedAssignments = JSON.parse(assData);
+				const parsedAssignmentGroups = JSON.parse(assGrpData);
+				const parsedCourseStudents = JSON.parse(stdData);
+				const parsedSubmissions = JSON.parse(submissionData);
+			}
+			res.status(200).send(canvasData);
 			//#endregion
 		} catch (error) {
 			console.log('Data retrieval error: ', error);

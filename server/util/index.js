@@ -94,16 +94,16 @@ export async function upsertJsonToDb(jsonContent, tableName, tableColumns, clien
                     }
                     valStr = valStr.trim().endsWith(',') ? valStr.trim().substring(0, valStr.trim().length - 1) : valStr.trim();
                     queryStr =  'INSERT INTO '+ tableName +' (id, '+ Array.from(tableColumns).join(', ') + ') VALUES (DEFAULT, '+ valStr +')';
-                    conflictString = 'ON CONFLICT (canvasid) DO UPDATE SET ' +  conflictColumnArr.join(', ') + ';';
+                    conflictString = 'ON CONFLICT (canvasid) DO UPDATE SET ' +  conflictColumnArr.join(', ') + ' RETURNING *;';
                     queryStr = queryStr + ' ' + conflictString;
-                    await client.query( queryStr, row.filter( e => e != undefined ));
-                    results.push({ record, success: true, error: null });
+                    const t = await client.query( queryStr, row.filter( e => e != undefined ));
+                    results.push({ 'record': t.rows[0], 'success': true, 'error': null });
                 } 
                 catch (insertError) {
                     console.error('Insert error for ' + tableName + ' record:', record, insertError.message);
                     console.error('Query:', queryStr);
                     console.error('Data:',  row.filter( e => e != undefined ));
-                    results.push({ record, success: false, error: insertError.message });
+                    results.push({ record, 'success': false, 'error': insertError.message });
                     status = false;
                 }
             }
