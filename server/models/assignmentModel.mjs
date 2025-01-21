@@ -15,25 +15,29 @@ export default class assignmentModel{
     this.pointspossible = pointsPossible ? pointsPossible : 0;
   }
 
-  static convertJSONtoArray(jsonObj) {
+  static convertJSONtoArray(jsonObj, courseData, groupData) {
       let parsedDataArray = [];
 
       if( Array.isArray( jsonObj ) ) {
           jsonObj.forEach( element => {
+              const courseRecordId = courseData.find((e) => e.canvasid == element.course_id).id;
+              const groupRecordId = groupData.find((e) => e.canvasid == element.assignment_group_id).id;
               parsedDataArray.push( new assignmentModel(
                   element[ "id" ].toString(),
-                  element[ "courseid" ].toString(),
-                  element[ "assignment_group_id" ].toString(),
+                  courseRecordId,
+                  groupRecordId,
                   element[ "name" ],
                   element[ "points_possible" ]
               ));
           });		
       }
       else{
+          const courseRecordId = courseData.find((e) => e.canvasid == jsonObj.course_id).id;
+          const groupRecordId = groupData.find((e) => e.canvasid == jsonObj.assignment_group_id).id;
           parsedDataArray.push( new assignmentModel(
             jsonObj[ "id" ].toString(),
-            jsonObj[ "courseid" ].toString(),
-            jsonObj[ "assignment_group_id" ].toString(),
+            courseRecordId,
+            groupRecordId,
             jsonObj[ "name" ],
             jsonObj[ "points_possible" ]
           ));		

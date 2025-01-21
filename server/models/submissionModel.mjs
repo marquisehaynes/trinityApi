@@ -1,12 +1,13 @@
 export default class submissionModel{    
   static columns = new Set(['canvasid', 'attemptnumber', 'assignmentid', 'studentid', 'coursestudentid', 'score']);
   static conflictColumn = 'canvasid';
+  
   canvasid;
-  attemptnumber;
+  coursestudentid;
   assignmentid;
   studentid;
-  coursestudentid;
   score;
+  attemptnumber;
 
   constructor( canvasId, courseStudentId, studentId, assId, attemptNumber, Score ){
     this.canvasid = canvasId;
@@ -17,30 +18,40 @@ export default class submissionModel{
     this.score = Score;
   }
   
-  static convertJSONtoArray(jsonObj) {
+  static convertJSONtoArray(jsonObj, courseStudentData, assignmentData) {
     let parsedDataArray = [];
 
     if( Array.isArray( jsonObj ) ) {
       jsonObj.forEach( element => {
-        parsedDataArray.push( new submissionModel(
-          element[ "id" ].toString(),
-          element[ "coursestudentid" ].toString(),
-          element[ "user_id" ].toString(),
-          element[ "assignment_id" ].toString(),
-          element[ "attempt" ],
-          element["score"] ? element["score"] : 0
-        ));
+        try {
+          const assignmentRecord = assignmentData.find((e) => e.canvasid == element.assignment_id);
+          const courseStudentRecord = courseStudentData.find((e) => e.canvasstudentid == element.user_id && e.courseid == assignmentRecord.courseid );
+          const studentId = courseStudentRecord.studentid;
+          parsedDataArray.push( new submissionModel(
+            element[ "id" ].toString(),
+            courseStudentRecord.id,
+            studentId,
+            assignmentRecord.id,
+            element[ "attempt" ],
+            element["score"] ? element["score"] : 0
+          ));
+        } catch (error) { }        
       });		
     }
     else{
-      parsedDataArray.push( new submissionModel(
-        jsonObj[ "id" ].toString(),
-        jsonObj[ "coursestudentid" ].toString(),
-        jsonObj[ "user_id" ].toString(),
-        jsonObj[ "assignment_id" ].toString(),
-        jsonObj[ "attempt" ],
-        jsonObj["score"] ? jsonObj["score"] : 0
-      ));		
+      try {
+        const assignmentRecord = assignmentData.find((e) => e.canvasid == jsonObj.assignment_id);
+        const courseStudentRecord = courseStudentData.find((e) => e.canvasstudentid == jsonObj.user_id && e.courseid == assignmentRecord.courseid );
+        const studentId = courseStudentRecord.studentid;
+        parsedDataArray.push( new submissionModel(
+          jsonObj[ "id" ].toString(), 
+          courseStudentRecord.id,
+          studentId,
+          assignmentRecord.id,
+          jsonObj[ "attempt" ],
+          jsonObj["score"] ? jsonObj["score"] : 0
+        ));		
+      } catch (error) { }
     }
     return parsedDataArray;     
   }

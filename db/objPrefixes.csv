@@ -1,12 +1,12 @@
 object,prefix
 course,001
 student,002
-assignmentgroup,003
-assignment,004
-assignmentquestion,005
-submission,006
-timesheet,007
-timesheetentry,008
+coursestudent,003
+assignmentgroup,004
+assignment,005
+assignmentquestion,006
+timesheet,008
+timesheetentry,009
 user,a01
 persona,a02
 personapermission,a03
@@ -14,3 +14,4 @@ processqueue,a04
 accesslog,a05
 recyclebin,a06
 rowindex,a07
+assignmentsubmission,007

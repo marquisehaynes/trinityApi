@@ -2,23 +2,15 @@ import fs from 'fs';
 import https	     from 'https';
 import Parser from 'json2csv';
 
-export function getCanvasRequestDefinition(targetObj,params){
+export function getCanvasRequestDefinition(targetObj, courseId){
     const canvasToken= JSON.parse(fs.readFileSync('config.json','utf8')).canvas.authToken;
-    let objPathMap;
-    if(params){
-        objPathMap = new Map([
-            ["students", "/api/v1/courses/" + params.get('courseId') + "/enrollments?per_page=1000"],
-            ["courses", '/api/v1/courses?per_page=1000'],
-            ["assignmentgroups", '/api/v1/courses/' + params.get('courseId') + '/assignment_groups?per_page=1000'],
-            ['assignments','/api/v1/courses/' + params.get('courseId') + '/assignments?per_page=1000'],
-            ['submissions','/api/v1/courses/' + params.get('courseId') + '/students/submissions?student_ids[]=all&include[]=user&workflow_state=graded&per_page=35000']
-        ]);
-    }
-    else{
-        objPathMap = new Map([
-            ["courses", '/api/v1/courses?per_page=1000']
-        ]);
-    }
+    const objPathMap = new Map([
+        ["students", "/api/v1/courses/" +courseId + "/enrollments?per_page=1000"],
+        ["courses", '/api/v1/courses?per_page=1000'],
+        ["assignmentgroups", '/api/v1/courses/' + courseId + '/assignment_groups?per_page=1000'],
+        ['assignments','/api/v1/courses/' + courseId + '/assignments?per_page=1000'],
+        ['submissions','/api/v1/courses/' + courseId + '/students/submissions?student_ids[]=all&include[]=user&workflow_state=graded&per_page=35000']
+    ]);
     return {
         protocol: 'https:',
         hostname: 'canvas.instructure.com',
@@ -67,7 +59,7 @@ export function getAllFromTable(tableName) {
     });
 }
 
-export async function upsertJsonToDb(jsonContent, tableName, tableColumns, client) {
+export async function upsertJsonToDb(jsonContent, tableName, tableColumns, conflictColumn, client) {
 
     let status = true;
     const results = [];
@@ -88,13 +80,13 @@ export async function upsertJsonToDb(jsonContent, tableName, tableColumns, clien
                         valStr += '$'+valIndex + ', ';
                         valIndex++;
                         row.push(record[col]);
-                        if(col != 'canvasid'){
+                        if(col != conflictColumn){
                             conflictColumnArr.push(col +' = EXCLUDED.' + col)
                         }
                     }
                     valStr = valStr.trim().endsWith(',') ? valStr.trim().substring(0, valStr.trim().length - 1) : valStr.trim();
                     queryStr =  'INSERT INTO '+ tableName +' (id, '+ Array.from(tableColumns).join(', ') + ') VALUES (DEFAULT, '+ valStr +')';
-                    conflictString = 'ON CONFLICT (canvasid) DO UPDATE SET ' +  conflictColumnArr.join(', ') + ' RETURNING *;';
+                    conflictString = `ON CONFLICT (${conflictColumn}) DO UPDATE SET ` +  conflictColumnArr.join(', ') + ' RETURNING *;';
                     queryStr = queryStr + ' ' + conflictString;
                     const t = await client.query( queryStr, row.filter( e => e != undefined ));
                     results.push({ 'record': t.rows[0], 'success': true, 'error': null });

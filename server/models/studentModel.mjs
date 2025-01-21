@@ -16,26 +16,31 @@ export default class studentModel{
 
     if( Array.isArray( jsonObj ) ) {
       for(const element of jsonObj){
-        const std = new studentModel(
-          element["user"]["id"].toString(),
-          element["user"]["name"],
-          element["user"]["sortable_name"]
-        );
 
-        if(!data.includes(JSON.stringify(std))){
-          data.push(JSON.stringify(std));
-        }
+        if (element['role'] == 'StudentEnrollment' && element['user']['name'] != 'Test Student'){
+          const std = new studentModel(
+            element["user"]["id"].toString(),
+            element["user"]["name"],
+            element["user"]["sortable_name"]
+          );
+  
+          if(!data.includes(JSON.stringify(std))){
+            data.push(JSON.stringify(std));
+          }
+        }        
       }	
     }
     else{
-      const std = new studentModel(
-        jsonObj["user"]["id"].toString(),
-        jsonObj["user"]["name"],
-        jsonObj["user"]["sortable_name"]
-      );
-      if(!data.includes(JSON.stringify(std))){
-        data.push(JSON.stringify(std));
-      }
+      if (jsonObj['role'] == 'StudentEnrollment' && jsonObj['user']['name'] != 'Test Student'){
+        const std = new studentModel(
+          jsonObj["user"]["id"].toString(),
+          jsonObj["user"]["name"],
+          jsonObj["user"]["sortable_name"]
+        );
+        if(!data.includes(JSON.stringify(std))){
+          data.push(JSON.stringify(std));
+        }
+      }      
     }
 
     return data.map(e => JSON.parse(e));   

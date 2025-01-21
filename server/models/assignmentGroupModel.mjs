@@ -1,8 +1,3 @@
-import * as fs         from 'fs';
-import csv from 'csv-parser';
-import  * as util from '../util/index.js';  
-import Parser from 'json2csv';
-
 export default class assignmentGroupModel{    
   static columns = new Set(['canvasid', 'courseid', 'name', 'weight']);
   static conflictColumn = 'canvasid';
@@ -25,16 +20,17 @@ export default class assignmentGroupModel{
           jsonObj.forEach( element => {
               parsedDataArray.push( new assignmentGroupModel(
                   element[ "id" ].toString(),
-                  element[ "courseId" ],
+                  element["courseid"],
                   element[ "name" ],
                   element[ "group_weight" ]
               ));
           });		
       }
       else{
+        const courseRecordId = courseData.find((e) => e.canvasid == jsonObj.course_id).id;
           parsedDataArray.push( new assignmentGroupModel(
             jsonObj[ "id" ].toString(),
-            jsonObj[ "courseId" ],
+            jsonObj["courseid"],
             jsonObj[ "name" ],
             jsonObj[ "group_weight" ]
           ));		
