@@ -9,8 +9,8 @@
 # https://github.com/docker/awesome-compose
 services:
   postgres:
-    container_name: container-pg
-    image: postgres
+    container_name: postgres
+    image: postgres:18.1
     hostname: localhost
     ports:
       - "5432:5432"
@@ -19,11 +19,11 @@ services:
       POSTGRES_PASSWORD: trinnex
       POSTGRES_DB: studentdata
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql
     restart: unless-stopped
 
   pgadmin:
-    container_name: container-pgadmin
+    container_name: pgadmin
     image: dpage/pgadmin4
     depends_on:
       - postgres
@@ -37,7 +37,7 @@ services:
     restart: unless-stopped
 
   server:
-    container_name: container-trinityDbSvr
+    container_name: trinityDbSvr
     build:
       context: .
     environment:
