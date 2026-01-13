@@ -83,8 +83,8 @@ app.get('/api/auth/login', (req, res) => {
 });
 
 app.get('/api/auth/callback', async (req, res) => {
-  const params = client.callbackParams(req);
-  const tokenSet = await client.callback(
+  const params = oidcClient.callbackParams(req);
+  const tokenSet = await oidcClient.callback(
     'https://trinityedu.net:3000/api/auth/callback',
     params
   );
