@@ -4,9 +4,9 @@ import  * as canvasUtil from './canvasUtil/index.js';
 import express	   from 'express';
 import fs		   		 from 'fs';
 import pg		   		 from 'pg';
-import { Issuer } from 'openid-client';
+import * as oidcClient from 'openid-client';
 
-const keycloakIssuer = await Issuer.discover('http://keycloak/realms/trinity');
+const keycloakIssuer = await oidcClient.discovery('http://keycloak/realms/trinity');
 
 const appClient = new keycloakIssuer.Client({
   client_id: 'backend-client',
