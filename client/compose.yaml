@@ -8,63 +8,14 @@
 # database or a cache. For examples, see the Awesome Compose repository:
 # https://github.com/docker/awesome-compose
 services:
-  postgres:
-    container_name: postgres
-    image: postgres:18.1
-    hostname: localhost
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: nexus
-      POSTGRES_PASSWORD: trinnex
-      POSTGRES_DB: studentdata
-    volumes:
-      - postgres-data:/var/lib/postgresql
-      - type: bind
-        source: ./db
-        target: /var/lib/postgresql/dbData
-    restart: unless-stopped
-    networks:
-      - nexusnet
-
-  pgadmin:
-    container_name: pgadmin
-    image: dpage/pgadmin4
-    depends_on:
-      - postgres
-    ports:
-      - "5050:80"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: mhaynes@trinityedu.net
-      PGADMIN_DEFAULT_PASSWORD: AlphaNum#1
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    restart: unless-stopped
-    networks:
-      - nexusnet
-
-  server:
-    container_name: trinityDbSvr
+  trinitynexus:
     build:
       context: .
     environment:
       NODE_ENV: production
-    depends_on:
-      - postgres
     ports:
-      - 3000:3000
-    restart: unless-stopped
-    networks:
-      - nexusnet
+      - 8080:80
 
-volumes:
-  pgadmin_data:
-  postgres-data:
-
-networks:
-  nexusnet:
-    driver: bridge
-  
 # The commented out section below is an example of how to define a PostgreSQL
 # database that your application can use. `depends_on` tells Docker Compose to
 # start the database before your application. The `db-data` volume persists the
