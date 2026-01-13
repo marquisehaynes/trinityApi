@@ -6,7 +6,7 @@ import fs		   		 from 'fs';
 import pg		   		 from 'pg';
 import * as oidcClient from 'openid-client';
 
-const keycloakIssuer = await oidcClient.discovery(encodeURI('http://keycloak/realms/trinity'));
+const keycloakIssuer = await oidcClient.discovery(new URL('http://keycloak/realms/trinity'));
 
 const appClient = new keycloakIssuer.Client({
   client_id: 'backend-client',
