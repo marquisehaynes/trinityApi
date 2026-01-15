@@ -38,7 +38,7 @@ services:
     networks:
       - nexusnet
 
-  trinityDbSvr:
+  trinitydbsvr:
     container_name: trinityDbSvr
     build:
       context: ./server
