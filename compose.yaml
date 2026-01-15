@@ -132,6 +132,8 @@ volumes:
   pgadmin_data:
   postgres-data:
   keycloak_data:
+  ldap_data:
+  ldap_config:
 
 networks:
   nexusnet:
