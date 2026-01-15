@@ -1,5 +1,7 @@
 
 services:
+
+#Application Services
   postgres:
     container_name: postgres
     image: postgres:18.1
@@ -15,6 +17,7 @@ services:
       - type: bind
         source: ./db
         target: /var/lib/postgresql/dbData
+      - ./ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom
     restart: unless-stopped
     networks:
       - nexusnet
@@ -25,7 +28,7 @@ services:
     depends_on:
       - postgres
     ports:
-      - "8081:80"
+      - "8080:80"
     environment:
       PGADMIN_DEFAULT_EMAIL: mhaynes@trinityedu.net
       PGADMIN_DEFAULT_PASSWORD: AlphaNum#1
@@ -61,6 +64,7 @@ services:
     networks:
       - nexusnet
 
+#Network and Routing
   nginx:
     image: nginx:alpine
     container_name: nginx
@@ -72,9 +76,62 @@ services:
     networks:
       - nexusnet
 
+#Authentication stack
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: openldap
+    environment:
+      LDAP_ORGANISATION: "Trinity Allied Healthcareer Academy"
+      LDAP_DOMAIN: "trinityedu.net"
+      LDAP_ADMIN_PASSWORD: "rudygotthechalk"
+      LDAP_CONFIG_PASSWORD: "rudygotthechalk"
+    volumes:
+      - ldap_data:/var/lib/ldap
+      - ldap_config:/etc/ldap/slapd.d
+    ports:
+      - "389:389"
+      - "636:636"
+    networks:
+      - nexusnet
+
+  lam:
+    image: ldapaccountmanager/lam:latest
+    container_name: lam
+    depends_on:
+      - openldap
+    environment:
+      LAM_PASSWORD: "lamadminpassword"
+      LDAP_SERVER: "ldap://openldap:389"
+    ports:
+      - "8081:80"
+    networks:
+      - nexusnet
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0.2
+    container_name: keycloak
+    command:
+      - start-dev
+    depends_on:
+      - openldap
+    environment:
+      KC_DB: dev-file
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: rudygotthechalk
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+    ports:
+      - "8082:8080"
+    volumes:
+    - keycloak_data:/opt/keycloak/data
+    networks:
+      - nexusnet
+
+#Volumes and network config      
 volumes:
   pgadmin_data:
   postgres-data:
+  keycloak_data:
 
 networks:
   nexusnet:

@@ -1,0 +1,22 @@
+dn: dc=trinityedu,dc=net
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+o: Trinity Allied Healthcareer Academy
+
+dn: ou=users,dc=trinityedu,dc=net
+objectClass: organizationalUnit
+ou: users
+
+dn: ou=groups,dc=trinityedu,dc=net
+objectClass: organizationalUnit
+ou: groups
+
+dn: uid=mhaynes,ou=users,dc=trinityedu,dc=net
+objectClass: inetOrgPerson
+cn: Marquise Haynes
+sn: Haynes
+givenName: Marquise
+uid: mhaynes
+mail: mhaynes@trinityedu.net
+userPassword: AlphaNum#1
